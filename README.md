@@ -9,11 +9,11 @@ https://docs.google.com/document/d/11CoE7TrdprRMbzgC2VPh9_E2TvYQ-ulywtujbtXgqqI/
 ```shell
 conda create -p ./venv python=3.11
 ```
-3. Activate the environment.
+4. Activate the environment.
 ```shell
 conda activate ./venv
 ```
-4. Install the required packages.
+5. Install the required packages.
 ```shell
 pip install -r requirements.txt
 ```
