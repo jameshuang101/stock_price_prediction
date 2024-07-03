@@ -11,3 +11,4 @@ Flask
 tensorflow
 torch
 ipykernel
+yfinance
