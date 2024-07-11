@@ -12,3 +12,4 @@ tensorflow
 torch
 ipykernel
 yfinance
+fredapi
