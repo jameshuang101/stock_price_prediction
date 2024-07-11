@@ -62,7 +62,7 @@ def get_stock_data(
     if save_as:
         if save_as.endswith(".json"):
             with open(save_as, "w") as f:
-                f.write(res_df.to_json(orient="index"))
+                f.write(res_df.to_json(orient="index", date_unit="s"))
         elif save_as.endswith((".pickle", ".pkl")):
             res_df.to_pickle(save_as)
         elif save_as.endswith(".csv"):
@@ -149,7 +149,7 @@ def get_macro_data(
     if save_as:
         if save_as.endswith(".json"):
             with open(save_as, "w") as f:
-                f.write(res_df.to_json(orient="index"))
+                f.write(res_df.to_json(orient="index", date_unit="s"))
         elif save_as.endswith((".pickle", ".pkl")):
             res_df.to_pickle(save_as)
         elif save_as.endswith(".csv"):
