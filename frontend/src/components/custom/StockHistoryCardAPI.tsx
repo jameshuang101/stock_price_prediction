@@ -23,7 +23,6 @@ export default function StockHistoryCard({ symbol }: { symbol?: string }) {
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const res = await useHistoricalPriceQuery({ symbol: symbol! });
       setData(res);
-      console.log("bruv", res);
     };
     fetchData();
   }, [symbol]);

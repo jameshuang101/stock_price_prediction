@@ -191,7 +191,7 @@ export default function AnalyticsPage() {
               </CardDescription>
             </CardHeader>
           </Card>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 ">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 ">
             <StockHistoryCard symbol="AAPL" />
             {data.map((stock) => (
               <StockOHLCVChartCard key={stock.symbol} stock={stock} />
