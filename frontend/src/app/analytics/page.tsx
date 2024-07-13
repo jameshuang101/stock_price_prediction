@@ -41,6 +41,7 @@ import goog from "../../../../artifacts/GOOG/GOOG_20y.json";
 import msft from "../../../../artifacts/MSFT/MSFT_20y.json";
 import StockHistoryCard from "@/components/custom/StockHistoryCardAPI";
 import StockOHLCVChartCard from "@/components/custom/StockOHLCVChartCard";
+import MemoizedStockOHLCVChartCard from "@/components/custom/StockOHLCVChartCard";
 
 export default function AnalyticsPage() {
   interface OHLCV {
@@ -194,7 +195,7 @@ export default function AnalyticsPage() {
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 ">
             <StockHistoryCard symbol="AAPL" />
             {data.map((stock) => (
-              <StockOHLCVChartCard key={stock.symbol} stock={stock} />
+              <MemoizedStockOHLCVChartCard key={stock.symbol} stock={stock} />
             ))}
           </div>
         </div>
