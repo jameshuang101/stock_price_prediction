@@ -14,6 +14,9 @@ npm install -g @pnpm/exe
 
 # after pnpm is installed:
 pnpm i
+
+# add new file for the financial modeling prep api at path: ~/frontend/.env.local
+# content should be: FINANCIAL_MODELING_PREP_API_KEY=API_KEY
 ```
 
 First, run the development server:
