@@ -13,7 +13,7 @@ conda create env
 ```shell
 conda activate stock_prediction
 ```
-5. Navigate to root folder stock_price_prediction/ and upgrade local dev package.
+5. Navigate to stock_price_prediction/backend/ and upgrade local dev package.
 ```shell
 pip install -e .
 ```
