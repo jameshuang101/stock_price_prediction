@@ -2,7 +2,7 @@ import yfinance as yf
 from typing import List, Optional
 import pandas as pd
 import fredapi
-from datetime import date
+from datetime import date, timedelta
 import pickle
 import json
 
@@ -109,8 +109,8 @@ def get_macro_data(
     tickers = ticker.split(" ")
     # Dataframe to hold all results
     res_df = pd.DataFrame()
-    # Grab each series individually and merge into dataframe
 
+    # Grab each series individually and merge into dataframe
     for tk in tickers:
         # Try to grab from FRED API first
         if check_available_yf(tk) == False:
