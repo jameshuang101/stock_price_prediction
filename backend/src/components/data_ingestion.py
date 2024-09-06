@@ -76,6 +76,7 @@ def get_stock_data(
 
 # Relevant tickers: EFFR, UNRATE, UMCSENT
 def get_macro_data(
+    fred_api_key: str,
     ticker: str = "EFFR UNRATE UMCSENT ^VIX DX-Y.NYB",
     start_date=None,
     end_date=None,
@@ -85,6 +86,7 @@ def get_macro_data(
     Retrieves macroeconomic data from the FRED and/or Yahoo Finance API between a given start and end date.
 
     Args:
+        fred_api_key (str): Your Fred API key.
         ticker (str, optional): Ticker name to retrieve. Defaults to "EFFR UNRATE UMCSENT ^VIX DX-Y.NYB".
         start_date (Any, optional): Start date as datetime object or string, like "2023-01-01".
         end_date (Any, optional): Start date as datetime object or string, like "2023-12-31".
@@ -100,11 +102,8 @@ def get_macro_data(
             end_date="2023-12-31",
         )
     """
-    # Put your Fred api key here
-    global api_key
-    api_key = "69a47122deb5402556701ea01fa82a91"
 
-    fr = fredapi.Fred(api_key=api_key)
+    fr = fredapi.Fred(api_key=fred_api_key)
     # Parse the ticker
     tickers = ticker.split(" ")
     # Dataframe to hold all results
