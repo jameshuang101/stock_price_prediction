@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { memo, useState } from "react";
-import { capitalize } from "lodash";
+import { capitalCase } from "change-case";
 import { format } from "date-fns";
 import { Button } from "../ui/button";
 
@@ -45,7 +45,7 @@ function StockOHLCVChartCard({ stock }: { stock: StockExported }) {
   const [showVolume, setShowVolume] = useState(true);
 
   const tooltipFormatter = (value: any, name: string, props: any) => {
-    return [parseFloat(value).toFixed(2), capitalize(name)];
+    return [parseFloat(value).toFixed(2), capitalCase(name)];
   };
 
   return (
@@ -98,7 +98,7 @@ function StockOHLCVChartCard({ stock }: { stock: StockExported }) {
               <Legend
                 iconType="square"
                 formatter={(value) => {
-                  return capitalize(value);
+                  return capitalCase(value);
                 }}
                 content={(props) => (
                   <div className="flex flex-row space-x-2 justify-center w-full">

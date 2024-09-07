@@ -17,7 +17,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Company, useCompanySymbolQuery } from "@/utils/api";
-import { debounce } from "lodash";
+import { useDebounce } from "react-use";
 
 export type Option = Record<"value" | "label", string> & Record<string, string>;
 
@@ -44,8 +44,28 @@ export const AutoCompleteLazy = ({
 
   const [isOpen, setOpen] = useState(false);
   const [selected, setSelected] = useState<Option>(value as Option);
+  const [state, setState] = useState("typing stopped");
   const [inputValue, setInputValue] = useState<string>(value?.label || "");
   const [options, setOptions] = useState<Option[]>([]);
+  const [debouncedValue, setDebouncedValue] = useState("");
+  const [_, cancel] = useDebounce(
+    async () => {
+      setState("typing stopped");
+      setDebouncedValue(inputValue);
+      const res = await search(inputValue);
+      if (!res) {
+        setOptions([]);
+      } else {
+        setOptions(
+          res.map((company) =>
+            Object({ value: company.symbol, label: company.name })
+          )
+        );
+      }
+    },
+    500,
+    [inputValue]
+  );
 
   async function search(searchParams: string) {
     // not actually a hook, just an api call
@@ -55,21 +75,21 @@ export const AutoCompleteLazy = ({
     return res;
   }
 
-  const debouncedSearch = useRef(
-    debounce(async (criteria) => {
-      setOptions(
-        (await search(criteria)).map((company) =>
-          Object({ value: company.symbol, label: company.name })
-        )
-      );
-    }, 300)
-  ).current;
+  // const debouncedSearch = useRef(
+  //   debounce(async (criteria) => {
+  //     setOptions(
+  //       (await search(criteria)).map((company) =>
+  //         Object({ value: company.symbol, label: company.name })
+  //       )
+  //     );
+  //   }, 300)
+  // ).current;
 
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
+  // useEffect(() => {
+  //   return () => {
+  //     debouncedSearch.cancel();
+  //   };
+  // }, [debouncedSearch]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
@@ -78,7 +98,9 @@ export const AutoCompleteLazy = ({
         return;
       }
 
-      debouncedSearch(input.value);
+      // debouncedSearch(input.value);
+      setState("typing...");
+      setInputValue(input.value);
 
       // Keep the options displayed when the user is typing
       if (!isOpen) {
@@ -100,7 +122,7 @@ export const AutoCompleteLazy = ({
         input.blur();
       }
     },
-    [isOpen, options, onValueChange, debouncedSearch]
+    [isOpen, options, onValueChange]
   );
 
   const handleBlur = useCallback(() => {
@@ -149,7 +171,7 @@ export const AutoCompleteLazy = ({
             {isLoading ? (
               <CommandPrimitive.Loading>
                 <div className="p-1">
-                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="w-full h-8" />
                 </div>
               </CommandPrimitive.Loading>
             ) : null}
@@ -180,7 +202,7 @@ export const AutoCompleteLazy = ({
               </CommandGroup>
             ) : null}
             {!isLoading ? (
-              <CommandPrimitive.Empty className="select-none rounded-sm px-2 py-3 text-center text-sm">
+              <CommandPrimitive.Empty className="px-2 py-3 text-sm text-center rounded-sm select-none">
                 {emptyMessage}
               </CommandPrimitive.Empty>
             ) : null}

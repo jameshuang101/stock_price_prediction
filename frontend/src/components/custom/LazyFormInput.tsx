@@ -1,7 +1,6 @@
 "use client";
 
 import { Company, useCompanySymbolQuery } from "@/utils/api";
-import { debounce } from "lodash";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { AutoComplete, type Option } from "./Autocomplete";
