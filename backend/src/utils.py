@@ -6,7 +6,7 @@ import pandas as pd
 import pickle
 from sklearn.metrics import r2_score
 from sklearn.model_selection import GridSearchCV
-
+import torch
 from src.exception import CustomException
 
 
@@ -21,6 +21,22 @@ def save_object(file_path, obj):
 
     except Exception as e:
         raise CustomException(e, sys)
+
+
+def save_model(epochs, model, optimizer, criterion, path):
+    """
+    Function to save the trained model to disk.
+    """
+    print(f"Saving model...")
+    torch.save(
+        {
+            "epoch": epochs,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "loss": criterion,
+        },
+        path,
+    )
 
 
 def evaluate_models(X_train, y_train, X_test, y_test, models, param):
