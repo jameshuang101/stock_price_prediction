@@ -15,21 +15,6 @@ from sklearn.preprocessing import StandardScaler
 torch.set_default_device("cuda:0")
 
 
-def reformat_lstm_data(dataset: np.ndarray, look_back=30):
-    X, y = [], []
-
-    for i in range(look_back, len(dataset)):
-        X.append(dataset[i - look_back : i])
-        y.append(dataset[i, 0])
-
-    X, y = np.array(X), np.array(y)
-    # y = np.expand_dims(y, axis=1)
-
-    print("X shape:", X.shape)
-    print("y shape:", y.shape)
-    return X, y
-
-
 class LSTMModel(nn.Module):
     def __init__(self, num_classes, input_size, hidden_size, num_layers):
         super().__init__()
