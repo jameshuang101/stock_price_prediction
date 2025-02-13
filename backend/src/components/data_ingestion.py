@@ -13,7 +13,7 @@ def get_stock_data(
     start_date=None,
     end_date=None,
     period=None,
-    features: List[str] = ["Open", "High", "Low", "Close", "Volume"],
+    features: List[str] = ["Open", "High", "Low", "Close", "Volume", "Adj Close"],
     save_as: str = None,
 ) -> pd.DataFrame:
     """

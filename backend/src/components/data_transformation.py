@@ -27,7 +27,7 @@ def rma(s: pd.Series, period: int) -> pd.Series:
 def atr(
     df: pd.DataFrame,
     length: int = 14,
-    high_low_close_cols: List[str] = ["High", "Low", "Close"],
+    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
 ) -> pd.Series:
     """
     Calculates the average true range (ATR) over the input data for a particular period of time.
@@ -61,7 +61,7 @@ def rsi(df: pd.DataFrame, length: int = 14, column: str = "Close") -> pd.Series:
 
 def get_technical_indicators(
     df: pd.DataFrame,
-    high_low_close_cols: List[str] = ["High", "Low", "Close"],
+    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
     inplace: bool = True,
 ) -> Optional[pd.DataFrame]:
     """
@@ -69,7 +69,7 @@ def get_technical_indicators(
 
     Args:
         df (pd.DataFrame): Input DataFrame.
-        high_low_close_cols (List[str], optional): Column names for high, low and close in df. Defaults to ["High", "Low", "Close"].
+        high_low_close_cols (Tuple[str, str, str], optional): Column names for high, low and close in df. Defaults to ("High", "Low", "Close").
         inplace (bool, optional): Whether to alter the input DataFrame or return a new one. Defaults to True (alter the current one).
 
     Returns:
@@ -87,10 +87,14 @@ def get_technical_indicators(
     return df_copy
 
 
-def close_open_diff(df: pd.DataFrame, open_close_cols: List[str] = ["Open", "Close"]):
-    return (
-        100
-        * (df[open_close_cols[0]] - df[open_close_cols[1]].shift(1))
+def overnight_percent_diff(
+    df: pd.DataFrame, open_close_cols: Tuple[str, str] = ("Open", "Close")
+) -> pd.Series:
+    """
+    Calculates the percent change overnight during market closed hours.
+    """
+    return 100 * (
+        (df[open_close_cols[0]] - df[open_close_cols[1]].shift(1))
         / df[open_close_cols[1]].shift(1)
     )
 

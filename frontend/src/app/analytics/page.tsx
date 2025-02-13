@@ -36,9 +36,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LazyFormInput } from "@/components/custom/LazyFormInput";
-import appl from "../../../../artifacts/AAPL/AAPL_20y.json";
-import goog from "../../../../artifacts/GOOG/GOOG_20y.json";
-import msft from "../../../../artifacts/MSFT/MSFT_20y.json";
+import appl from "../../../../artifacts/datasets/AAPL/AAPL_20y.json";
+import goog from "../../../../artifacts/datasets/GOOG/GOOG_20y.json";
+import msft from "../../../../artifacts/datasets/MSFT/MSFT_20y.json";
 import StockHistoryCard from "@/components/custom/StockHistoryCardAPI";
 import StockOHLCVChartCard from "@/components/custom/StockOHLCVChartCard";
 import MemoizedStockOHLCVChartCard from "@/components/custom/StockOHLCVChartCard";
