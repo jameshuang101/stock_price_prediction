@@ -1,9 +1,14 @@
 environments/
-*.yml
+backend/notebooks/
+artifacts/logs/
+backend/logs/
+backend/wandb/
 
+*.yml
 *.swp
 *.egg-info
 *.ipynb_checkpoints
+*.ipynb
 
 __pycache__
 .pytest_cache
