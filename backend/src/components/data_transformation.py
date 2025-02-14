@@ -29,6 +29,9 @@ def macd(data: pd.DataFrame, column: str = "Close") -> pd.Series:
 
 
 def rma(s: pd.Series, period: int) -> pd.Series:
+    """
+    Calculates the relative moving average (RMA) for given period over the input data.
+    """
     try:
         return s.ewm(alpha=1 / period).mean()
     except Exception as e:
