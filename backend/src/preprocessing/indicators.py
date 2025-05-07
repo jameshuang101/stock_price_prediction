@@ -328,7 +328,7 @@ def psar(
                         AF[i] = AF[prev_i]
                         EP[i] = EP[prev_i]
 
-        return pd.Series(PSAR)
+        return pd.Series(PSAR, index=data.index)
     except Exception as e:
         raise CustomException(e, sys)
 
@@ -360,55 +360,30 @@ def get_technical_indicators(
 ) -> Optional[pd.DataFrame]:
     try:
         df_copy = df.copy()
-        start = time.time()
         df_copy["MACD"] = macd(df_copy, high_low_close_open_cols[2])
-        print(f"MACD calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["TR"] = tr(df_copy, high_low_close_cols=high_low_close_open_cols[:-1])
-        print(f"TR calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["ATR"] = atr(
             df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
         )
-        print(f"ATR calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["RSI"] = rsi(df_copy, period=14, column=high_low_close_open_cols[2])
-        print(f"RSI calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["Momentum"] = momentum(
             df_copy, shift=14, column=high_low_close_open_cols[2]
         )
-        print(f"Momentum calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["PSAR"] = psar(
             df_copy, af=0.02, max=0.2, high_low_close_cols=high_low_close_open_cols[:-1]
         )
-        print(f"PSAR calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["CCI"] = cci(
             df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
         )
-        print(f"CCI calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["SMA"] = sma(df_copy, period=14, column=high_low_close_open_cols[2])
-        print(f"SMA calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["WMA"] = wma(df_copy, period=14, column=high_low_close_open_cols[2])
-        print(f"WMA calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["HMA"] = hma(df_copy, period=14, column=high_low_close_open_cols[2])
-        print(f"HMA calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["ADX"] = adx(
             df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
         )
-        print(f"ADX calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy["Williams_R"] = williams_r(
             df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
         )
-        print(f"Williams_R calculation took {time.time() - start} seconds")
-        start = time.time()
         log_params = [
             ("Close", "Close", 0, 1),
             ("Close", "Close", 1, 2),
@@ -430,13 +405,9 @@ def get_technical_indicators(
         for col1, col2, shift1, shift2 in log_params:
             df_copy[f"r{i}"] = log_price(df_copy, col1, col2, shift1, shift2)
             i += 1
-        print(f"Log calculation took {time.time() - start} seconds")
-        start = time.time()
         df_copy = stochastic_oscillator(
             df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
         )
-        print(f"Stochastic Oscillator calculation took {time.time() - start} seconds")
-        start = time.time()
         if inplace:
             df = df_copy
         return df_copy
