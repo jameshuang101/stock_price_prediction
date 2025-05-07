@@ -15,7 +15,7 @@ def get_stock_data(
     start_date=None,
     end_date=None,
     period=None,
-    features: List[str] = ["Open", "High", "Low", "Close", "Volume", "Adj Close"],
+    features: List[str] = ["Open", "High", "Low", "Close", "Volume"],
     save_as: str = None,
 ) -> pd.DataFrame:
     """
@@ -75,6 +75,7 @@ def get_stock_data(
                     "Invalid extension. Should be one of (.json, .pickle, .pkl, .csv)"
                 )
                 pass
+        res_df.columns = features
         return res_df
 
     except Exception as e:

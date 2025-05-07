@@ -100,14 +100,14 @@ def stochastic_oscillator(
                     n += 1
                 df.at[i, "best_low"] = low
                 df.at[i, "best_high"] = high
-                df.at[i, "fast_k"] = 100 * (
+                df.at[i, "Fast_K"] = 100 * (
                     (df.iloc[i][column] - df.iloc[i]["best_low"])
                     / (df.iloc[i]["best_high"] - df.iloc[i]["best_low"])
                 )
 
-        data["fast_k"] = df["fast_k"]
-        data["fast_d"] = df["fast_k"].rolling(3).mean().round(2)
-        data["slow_d"] = df["slow_k"].rolling(3).mean().round(2)
+        data["Fast_K"] = df["Fast_K"]
+        data["Fast_D"] = df["Fast_K"].rolling(3).mean().round(2)
+        data["Slow_D"] = data["Fast_D"].rolling(3).mean().round(2)
 
         return data
     except Exception as e:
@@ -235,6 +235,112 @@ def rsi(data: pd.DataFrame, period: int = 14, column: str = "Close") -> pd.Serie
         raise CustomException(e, sys)
 
 
+def di(
+    data: pd.DataFrame,
+    period: int = 14,
+    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+) -> pd.Series:
+    """
+    Calculates the directional index (DI) over the input data for a particular period of time.
+    """
+    try:
+        di_plus = 100 * (
+            data[high_low_close_cols[0]].diff().ewm(span=period, adjust=False).mean()
+            / atr(data, period=period, high_low_close_cols=high_low_close_cols)
+        )
+        di_minus = 100 * (
+            data[high_low_close_cols[1]]
+            .diff(periods=-1)
+            .shift(1)
+            .ewm(span=period, adjust=False)
+            .mean()
+        )
+        return 100 * (di_plus - di_minus).abs() / (di_plus + di_minus).abs()
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def adx(
+    data: pd.DataFrame,
+    period: int = 14,
+    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+) -> pd.Series:
+    """
+    Calculates the average directional index (ADX) over the input data for a particular period of time.
+    """
+    try:
+        di = di(data, period=period, high_low_close_cols=high_low_close_cols)
+        return ((di.shift(1) * 13) + di) / period
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def psar(
+    data: pd.DataFrame,
+    af: float = 0.02,
+    max: float = 0.2,
+    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+) -> pd.Series:
+    psar = data.to_dict("index")
+
+    psar[0]["AF"] = af
+    psar[0]["PSAR"] = psar[0][high_low_close_cols[1]]
+    psar[0]["EP"] = psar[0][high_low_close_cols[0]]
+    psar[0]["PSARdir"] = "bull"
+
+    i = list(psar.keys())[1:]
+
+    for i in list(psar.keys())[1:]:  # start on second data row
+        prev_i = i - 1
+        if psar[prev_i]["PSARdir"] == "bull":
+            psar[i]["PSAR"] = psar[prev_i]["PSAR"] + (
+                psar[prev_i]["AF"] * (psar[prev_i]["EP"] - psar[prev_i]["PSAR"])
+            )
+            psar[i]["PSARdir"] = "bull"
+
+            if (
+                psar[i]["Low"] < psar[prev_i]["PSAR"]
+                or psar[i]["Low"] < psar[i]["PSAR"]
+            ):
+                psar[i]["PSARdir"] = "bear"
+                psar[i]["PSAR"] = psar[prev_i]["EP"]
+                psar[i]["EP"] = psar[prev_i]["Low"]
+                psar[i]["AF"] = af
+
+            else:
+                if psar[i][high_low_close_cols[0]] > psar[prev_i]["EP"]:
+                    psar[i]["EP"] = psar[i][high_low_close_cols[0]]
+                    psar[i]["AF"] = min(max, psar[prev_i]["AF"] + af)
+                else:
+                    psar[i]["AF"] = psar[prev_i]["AF"]
+                    psar[i]["EP"] = psar[prev_i]["EP"]
+
+        else:
+            psar[i]["PSAR"] = psar[prev_i]["PSAR"] - (
+                psar[prev_i]["AF"] * (psar[prev_i]["PSAR"] - psar[prev_i]["EP"])
+            )
+            psar[i]["PSARdir"] = "bear"
+
+            if (
+                psar[i][high_low_close_cols[0]] > psar[prev_i]["PSAR"]
+                or psar[i][high_low_close_cols[0]] > psar[i]["PSAR"]
+            ):
+                psar[i]["PSARdir"] = "bull"
+                psar[i]["PSAR"] = psar[prev_i]["EP"]
+                psar[i]["EP"] = psar[prev_i][high_low_close_cols[0]]
+                psar[i]["AF"] = af
+            else:
+                if psar[i][high_low_close_cols[1]] < psar[prev_i]["EP"]:
+                    psar[i]["EP"] = psar[i][high_low_close_cols[1]]
+                    psar[i]["AF"] = min(max, psar[prev_i]["AF"] + af)
+                else:
+                    psar[i]["AF"] = psar[prev_i]["AF"]
+                    psar[i]["EP"] = psar[prev_i]["EP"]
+
+    df = pd.DataFrame.from_dict(psar, orient="index")
+    return df["PSAR"]
+
+
 def overnight_percent_diff(
     data: pd.DataFrame, open_close_cols: Tuple[str, str] = ("Open", "Close")
 ) -> pd.Series:
@@ -272,11 +378,6 @@ def get_technical_indicators(
         None if inplace is True, altered DataFrame with technical indicator columns attached if inplace is False.
     """
     try:
-        if inplace:
-            df["MACD"] = macd(df, high_low_close_open_cols[2])
-            df["ATR"] = atr(df, high_low_close_cols=high_low_close_open_cols[:-1])
-            df["RSI"] = rsi(df, column=high_low_close_open_cols[2])
-            return None
         df_copy = df.copy()
         df_copy["MACD"] = macd(df_copy, high_low_close_open_cols[2])
         df_copy["ATR"] = atr(df_copy, high_low_close_cols=high_low_close_open_cols[:-1])
