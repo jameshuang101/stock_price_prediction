@@ -15,7 +15,7 @@ def get_stock_data(
     start_date=None,
     end_date=None,
     period=None,
-    features: List[str] = ["Open", "High", "Low", "Close", "Volume", "Adj Close"],
+    features: List[str] = ["Open", "High", "Low", "Close", "Volume"],
     save_as: str = None,
 ) -> pd.DataFrame:
     """
@@ -75,6 +75,7 @@ def get_stock_data(
                     "Invalid extension. Should be one of (.json, .pickle, .pkl, .csv)"
                 )
                 pass
+        res_df.columns = features
         return res_df
 
     except Exception as e:
@@ -138,14 +139,9 @@ def get_macro_data(
 
             # Try to grab from Yahoo Finance API
             else:
-                if start_date and end_date:
-                    res = get_stock_data(
-                        tk, start_date=start_date, end_date=end_date, features=["Close"]
-                    )
-                    res = res["Close"]
-                else:
-                    res = get_stock_data(tk, features=["Close"])
-                    res = res["Close"]
+                res = get_stock_data(
+                    tk, start_date=start_date, end_date=end_date, features=["Close"]
+                )["Close"]
 
             # Name the column then merge into result dataframe
             res.rename(tk, inplace=True)
@@ -180,6 +176,6 @@ def check_available_yf(asset: str) -> bool:
     """
     try:
         info = yf.Ticker(asset).history(period="5d", interval="1d")
-        return len(info) > 0
     except Exception as e:
-        raise CustomException(e, sys)
+        return False
+    return len(info) > 0
