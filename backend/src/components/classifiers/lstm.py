@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 torch.set_default_device("cuda:0")
 
 
-class LSTMModel(nn.Module):
+class LSTMClassifier(nn.Module):
     def __init__(self, num_classes, input_size, hidden_size, num_layers):
         super().__init__()
         self.num_classes = num_classes  # output size
@@ -49,7 +49,7 @@ def train_model(
     y_train,
     X_val,
     y_val,
-    model: LSTMModel,
+    model: LSTMClassifier,
     optimizer,
     loss_fn,
     loader,
