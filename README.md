@@ -10,7 +10,7 @@ https://docs.google.com/document/d/11CoE7TrdprRMbzgC2VPh9_E2TvYQ-ulywtujbtXgqqI/
 
 3. Navigate to stock_price_prediction/environments/
 
-4. Change the prefix in `environment.yml` to where you would like to save the environment.
+4. Change the prefix in `environment.yml` to where you would like to save the environment. Recommended path is `~/anaconda3/envs/`.
 
 5. Install the environment.
 
