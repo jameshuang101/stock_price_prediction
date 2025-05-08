@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple
 
 def remove_inf_and_nan(
     df: pd.DataFrame, behavior: str = "impute", window: int = 14
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame:
     """
     Removes infinite and NaN values from the DataFrame.
 
