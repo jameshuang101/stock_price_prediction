@@ -11,12 +11,12 @@ from src.exception import CustomException
 
 # Relevant tickers: ^VIX, DX-Y.NYB, AAPL, MSFT, GOOG, AMZN, SPY, VOO, ^GSPC
 def get_stock_data(
-    ticker,
+    ticker: str,
     start_date=None,
     end_date=None,
-    period=None,
+    period: Optional[str] = None,
     features: List[str] = ["Open", "High", "Low", "Close", "Volume"],
-    save_as: str = None,
+    save_as: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Retrieves select stock data (OHLCV) from the Yahoo Finance API between a given start and end date.
@@ -52,7 +52,7 @@ def get_stock_data(
         elif start_date and not end_date:
             # Grab data between specified start date and now
             stock_data = yf.download(ticker, start=start_date)
-        elif period:
+        elif period is not None:
             # Grab data up to a certain period in the past
             stock_data = yf.download(ticker, period=period)
         else:
@@ -61,8 +61,13 @@ def get_stock_data(
 
         # Extract the relevant columns
         res_df = stock_data[features]
+        res_df.columns = features
 
-        if save_as:
+    except Exception as e:
+        raise CustomException(e, sys)
+
+    if save_as:
+        try:
             if save_as.endswith(".json"):
                 with open(save_as, "w") as f:
                     f.write(res_df.to_json(orient="index", date_unit="s"))
@@ -75,11 +80,9 @@ def get_stock_data(
                     "Invalid extension. Should be one of (.json, .pickle, .pkl, .csv)"
                 )
                 pass
-        res_df.columns = features
-        return res_df
-
-    except Exception as e:
-        raise CustomException(e, sys)
+        except Exception as e:
+            raise CustomException(e, sys)
+    return res_df
 
 
 # Relevant tickers: EFFR, UNRATE, UMCSENT
@@ -88,7 +91,7 @@ def get_macro_data(
     ticker: str = "EFFR UNRATE UMCSENT ^VIX DX-Y.NYB",
     start_date=None,
     end_date=None,
-    save_as: str = None,
+    save_as: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Retrieves macroeconomic data from the FRED and/or Yahoo Finance API between a given start and end date.

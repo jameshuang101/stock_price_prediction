@@ -15,33 +15,33 @@ from sklearn.preprocessing import StandardScaler
 torch.set_default_device("cuda:0")
 
 
+from torch.nn import BCEWithLogitsLoss, Sigmoid
+
+
+# Define LSTM classifier model
 class LSTMClassifier(nn.Module):
-    def __init__(self, num_classes, input_size, hidden_size, num_layers):
-        super().__init__()
-        self.num_classes = num_classes  # output size
-        self.num_layers = num_layers  # number of recurrent layers in the lstm
-        self.input_size = input_size  # input size
-        self.hidden_size = hidden_size  # neurons in each lstm layer
+    def __init__(self, input_size, hidden_size, num_layers, output_size):
+        super(LSTMClassifier, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
         self.lstm = nn.LSTM(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            batch_first=True,
-            dropout=0.2,
-            num_layers=num_layers,
+            input_size, hidden_size, num_layers, batch_first=True, dropout=0.2
         )
         self.fc_1 = nn.Linear(hidden_size, 128)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.5)
-        self.fc_2 = nn.Linear(128, num_classes)
+        self.fc_2 = nn.Linear(128, output_size)
 
     def forward(self, x):
-        self.lstm.flatten_parameters()
-        _, (hidden, _) = self.lstm(x)
-        out = hidden[-1]
-        out = self.fc_1(out)
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+        out, _ = self.lstm(x, (h0, c0))
+        out = self.fc_1(out[:, -1, :])
         out = self.dropout(out)
         out = self.relu(out)
-        return self.fc_2(out)
+        out = self.fc_2(out)
+        # out = BCEWithLogitsLoss()(out, reduction="none")
+        return out
 
 
 def train_model(

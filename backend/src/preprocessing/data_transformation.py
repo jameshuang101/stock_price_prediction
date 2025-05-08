@@ -96,3 +96,18 @@ def lookback_format(
         return np.array(X), y
     except Exception as e:
         raise CustomException(e, sys)
+
+
+def get_trend(df: pd.DataFrame, column: str = "Close", first: float = 0.0) -> pd.Series:
+    """
+    Computes the trend of the given column in the DataFrame.
+    """
+    try:
+        trend = np.zeros(len(df), dtype=np.float32)
+        trend[0] = first
+        for i in range(1, len(df)):
+            if df[column].iloc[i] > df[column].iloc[i - 1]:
+                trend[i] = 1.0
+        return pd.Series(trend, index=df.index, name="Trend")
+    except Exception as e:
+        raise CustomException(e, sys)
