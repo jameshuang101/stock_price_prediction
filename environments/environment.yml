@@ -64,6 +64,7 @@ dependencies:
       - cycler==0.12.1
       - daal==2024.6.0
       - daal4py==2024.6.0
+      - dateparser==1.2.1
       - debugpy==1.8.5
       - docker-pycreds==0.4.0
       - exchange-calendars==4.10
@@ -149,7 +150,6 @@ dependencies:
       - pyparsing==3.1.4
       - python-dateutil==2.9.0.post0
       - python-dotenv==1.0.1
-      - python-graphviz==0.20.3
       - pytz==2024.1
       - pywavelets==1.7.0
       - pyyaml==6.0.2
@@ -195,5 +195,6 @@ dependencies:
       - werkzeug==3.0.4
       - wrapt==1.16.0
       - xgboost==2.1.1
-      - yfinance==0.2.59
+      - yfinance==0.2.5
+      - python-graphviz==0.20.3
 prefix: /home/james/anaconda3/envs/stock_prediction

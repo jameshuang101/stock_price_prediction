@@ -2,11 +2,13 @@ import yfinance as yf
 from typing import List, Optional
 import pandas as pd
 import fredapi
-from datetime import date
+from datetime import date, datetime, timedelta
+import dateparser
 import pickle
 import json
 import sys
 from src.exception import CustomException
+import pandas_market_calendars as mcal
 
 
 # Relevant tickers: ^VIX, DX-Y.NYB, AAPL, MSFT, GOOG, AMZN, SPY, VOO, ^GSPC
@@ -182,3 +184,57 @@ def check_available_yf(asset: str) -> bool:
     except Exception as e:
         return False
     return len(info) > 0
+
+
+def is_market_day(date=None, start_date=None, end_date=None) -> bool:
+    """
+    Checks if a given date is a market day.
+    """
+    if date is not None:
+        try:
+            result = mcal.get_calendar("NYSE").schedule(start_date=date, end_date=date)
+        except Exception as e:
+            raise CustomException(e, sys)
+    elif start_date is not None and end_date is not None:
+        try:
+            result = mcal.get_calendar("NYSE").schedule(
+                start_date=start_date, end_date=end_date
+            )
+        except Exception as e:
+            raise CustomException(e, sys)
+    else:
+        print("No date provided")
+        return False
+    return result.empty == False
+
+
+def get_market_days(start_date, end_date):
+    """
+    Get the market days between two dates.
+    """
+    if start_date is None or end_date is None:
+        print("No date provided")
+        return []
+    try:
+        market_calendar = mcal.get_calendar("NYSE")
+        market_days = market_calendar.valid_days(
+            start_date=start_date, end_date=end_date
+        )
+        return market_days
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def get_lead_days(date=None, lead_days: int = 18):
+    """
+    Get the N market days of lead data for feature engineering immediately preceding a date (Defaults to 18 lead days).
+    """
+    if date is not None:
+        if type(date) == str:
+            date = dateparser.parse(date)
+        start_date = date - timedelta(days=round((lead_days + 2) * 1.5))
+        days_list = get_market_days(start_date=start_date, end_date=date)
+        return days_list[-lead_days - 1 : -1]
+    else:
+        print("No date provided")
+        return []
