@@ -10,17 +10,21 @@ https://docs.google.com/document/d/11CoE7TrdprRMbzgC2VPh9_E2TvYQ-ulywtujbtXgqqI/
 
 3. Navigate to stock_price_prediction/environments/
 
+4. Change the prefix in `environment.yml` to where you would like to save the environment.
+
+5. Install the environment.
+
 ```shell
-conda create env
+conda env create -f environment.yml
 ```
 
-4. Activate the environment.
+6. Activate the environment.
 
 ```shell
 conda activate stock_prediction
 ```
 
-5. Navigate to stock_price_prediction/backend/ and upgrade local dev package.
+7. Navigate to stock_price_prediction/backend/ and upgrade local dev package.
 
 ```shell
 pip install -e .
