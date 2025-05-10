@@ -27,6 +27,12 @@ from ray.train import Checkpoint, get_checkpoint
 from ray.tune.schedulers import ASHAScheduler
 import ray.cloudpickle as pickle
 
+STOCK = "AAPL"
+DATASET_PATH = "/media/james/49c33c9d-6813-4c46-b907-cc3d5f3ba7f4/repos/stock_price_prediction/artifacts/datasets/{STOCK}/"
+TRAIN_DATASET_PATH = os.path.join(DATASET_PATH, f"train_dataset.pkl")
+VAL_DATASET_PATH = os.path.join(DATASET_PATH, f"val_dataset.pkl")
+MODEL_PATH = "/media/james/49c33c9d-6813-4c46-b907-cc3d5f3ba7f4/repos/stock_price_prediction/artifacts/models/{STOCK}/"
+
 
 torch.set_default_device("cuda:0")
 
