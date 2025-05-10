@@ -20,7 +20,7 @@ import pickle
 from os.path import join, dirname, abspath
 from sklearn.preprocessing import RobustScaler, StandardScaler
 
-API_KEYS_PATH = join(abspath(dirname(dirname(dirname(os.getcwd())))), "api_keys.yml")
+API_KEYS_PATH = join(abspath(dirname(dirname(os.getcwd()))), "api_keys.yml")
 try:
     with open(API_KEYS_PATH, "r") as f:
         FRED_API_KEY = yaml.safe_load(f)["fred_api_key"]
@@ -76,9 +76,6 @@ class StockDataset(Dataset):
         except:
             logging.info("Invalid date format, aborting prediction")
             raise CustomException("Invalid date format", sys)
-
-        if not self.load_model(self.model_path):
-            logging.info("Failed to load model. Check model path and try again.")
 
         logging.info(
             f"Grabbing lead market dates for financial indicator calculations..."
@@ -164,7 +161,7 @@ class StockDataset(Dataset):
             raise CustomException(f"Failed to save data dict: {e}", sys)
 
     def __len__(self):
-        return len(self.data)
+        return self.X.shape[0]
 
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
