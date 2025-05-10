@@ -19,6 +19,7 @@ import os
 import pickle
 from os.path import join, dirname, abspath
 from sklearn.preprocessing import RobustScaler, StandardScaler
+from datetime import datetime, date, timedelta
 
 API_KEYS_PATH = join(abspath(dirname(dirname(os.getcwd()))), "api_keys.yml")
 try:
@@ -35,9 +36,9 @@ class StockDataset(Dataset):
         stock: str,
         dict_path: Optional[str] = None,
         scaler: Optional[RobustScaler | StandardScaler] = None,
-        date=None,
-        start_date=None,
-        end_date=None,
+        date: Optional[str | datetime] = None,
+        start_date: Optional[str | datetime] = None,
+        end_date: Optional[str | datetime] = None,
     ):
         self.stock = stock
         if dict_path is not None:
@@ -45,14 +46,14 @@ class StockDataset(Dataset):
             try:
                 with open(dict_path, "rb") as f:
                     data_dict = pickle.load(f)
-                self.data = data_dict["data"]
+                self._data = data_dict["data"]
                 if scaler is None:
-                    self.scaler = data_dict["scaler"]
+                    self._scaler = data_dict["scaler"]
                 else:
-                    self.scaler = scaler
-                self.trend = data_transformation.get_trend(self.data)
+                    self._scaler = scaler
+                self.trend = data_transformation.get_trend(self._data)
                 self.X = scaler.transform(
-                    self.data.drop(
+                    self._data.drop(
                         columns=["Open", "Close", "High", "Low", "Volume"]
                     ).to_numpy()
                 )
@@ -70,12 +71,25 @@ class StockDataset(Dataset):
             logging.info("No date provided, aborting prediction")
             raise CustomException("No date(s) provided", sys)
 
-        try:
-            start_date = dateparser.parse(start_date)
-            end_date = dateparser.parse(end_date)
-        except:
-            logging.info("Invalid date format, aborting prediction")
-            raise CustomException("Invalid date format", sys)
+        if not data_ingestion.is_market_day(start_date=start_date, end_date=end_date):
+            logging.info("No market days between provided dates, aborting prediction")
+            raise CustomException("No market days between provided dates", sys)
+
+        if type(start_date) == str:
+            try:
+                start_date = dateparser.parse(start_date)
+            except:
+                logging.info("Invalid date format, aborting prediction")
+                raise CustomException("Invalid date format", sys)
+
+        if type(end_date) == str:
+            try:
+                end_date = dateparser.parse(end_date)
+            except:
+                logging.info("Invalid date format, aborting prediction")
+                raise CustomException("Invalid date format", sys)
+
+        end_date = end_date + timedelta(days=1)
 
         logging.info(
             f"Grabbing lead market dates for financial indicator calculations..."
@@ -99,8 +113,8 @@ class StockDataset(Dataset):
 
         logging.info("Calculating financial indicators and trend...")
         try:
-            self.data = indicators.get_technical_indicators(stock_data, inplace=False)
-            self.trend = data_transformation.get_trend(self.data)
+            self._data = indicators.get_technical_indicators(stock_data, inplace=False)
+            self.trend = data_transformation.get_trend(self._data)
         except Exception as e:
             logging.info(f"Failed to calculate financial indicators and trend: {e}")
             raise CustomException(e, sys)
@@ -108,8 +122,8 @@ class StockDataset(Dataset):
 
         logging.info("Formatting and cleaning data...")
         try:
-            self.data = data_cleaning.remove_inf_and_nan(self.data, behavior="impute")
-            self.data = self.data.loc[start_date:]
+            self._data = data_cleaning.remove_inf_and_nan(self._data, behavior="impute")
+            self._data = self._data.loc[start_date:]
             self.trend = self.trend.loc[start_date:]
         except Exception as e:
             logging.info(f"Failed to format and clean data: {e}")
@@ -123,7 +137,7 @@ class StockDataset(Dataset):
                 start_date=lead_date,
                 end_date=end_date,
             )
-            self.data = self.data.merge(
+            self._data = self._data.merge(
                 macro_data, how="left", left_index=True, right_index=True
             )
         except Exception as e:
@@ -133,12 +147,12 @@ class StockDataset(Dataset):
 
         logging.info("Scaling data...")
         try:
-            X = self.data.drop(
+            X = self._data.drop(
                 columns=["Open", "Close", "High", "Low", "Volume"]
             ).to_numpy()
-            self.scaler = RobustScaler()
-            self.scaler.fit(X)
-            self.X = self.scaler.transform(X)
+            self._scaler = RobustScaler()
+            self._scaler.fit(X)
+            self.X = self._scaler.transform(X)
             self.y = self.trend.to_numpy()
         except Exception as e:
             logging.info(f"Failed to scale data: {e}")
@@ -151,8 +165,8 @@ class StockDataset(Dataset):
             with open(dict_path, "wb") as f:
                 pickle.dump(
                     {
-                        "data": self.data,
-                        "scaler": self.scaler,
+                        "data": self._data,
+                        "scaler": self._scaler,
                     },
                     f,
                     protocol=pickle.HIGHEST_PROTOCOL,
@@ -165,3 +179,11 @@ class StockDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def scaler(self):
+        return self._scaler
