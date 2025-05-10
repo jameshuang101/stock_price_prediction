@@ -33,26 +33,23 @@ except Exception as e:
 class StockDataset(Dataset):
     def __init__(
         self,
-        stock: str,
+        stock: Optional[str] = None,
         dict_path: Optional[str] = None,
         scaler: Optional[RobustScaler | StandardScaler] = None,
         date: Optional[str | datetime] = None,
         start_date: Optional[str | datetime] = None,
         end_date: Optional[str | datetime] = None,
     ):
-        self.stock = stock
         if dict_path is not None:
             logging.info("Loading data dict from file...")
             try:
                 with open(dict_path, "rb") as f:
                     data_dict = pickle.load(f)
+                self._stock = data_dict["stock"]
                 self._data = data_dict["data"]
-                if scaler is None:
-                    self._scaler = data_dict["scaler"]
-                else:
-                    self._scaler = scaler
+                self._scaler = data_dict["scaler"]
                 self.trend = data_transformation.get_trend(self._data)
-                self.X = scaler.transform(
+                self.X = self._scaler.transform(
                     self._data.drop(
                         columns=["Open", "Close", "High", "Low", "Volume"]
                     ).to_numpy()
@@ -62,6 +59,11 @@ class StockDataset(Dataset):
                 logging.info(f"Failed to load data dict: {e}")
                 raise CustomException(e, sys)
             return
+
+        if stock is None:
+            logging.info("No stock name provided, aborting prediction")
+            raise CustomException("No stock name provided", sys)
+        self._stock = stock
 
         if date is not None:
             start_date = date
@@ -105,7 +107,7 @@ class StockDataset(Dataset):
             f"Grabbing stock data for {stock} from {lead_date} to {end_date}..."
         )
         try:
-            stock_data = data_ingestion.get_stock_data(self.stock, lead_date, end_date)
+            stock_data = data_ingestion.get_stock_data(self._stock, lead_date, end_date)
         except Exception as e:
             logging.info(f"Failed to grab stock data: {e}")
             raise CustomException(e, sys)
@@ -150,8 +152,11 @@ class StockDataset(Dataset):
             X = self._data.drop(
                 columns=["Open", "Close", "High", "Low", "Volume"]
             ).to_numpy()
-            self._scaler = RobustScaler()
-            self._scaler.fit(X)
+            if scaler is not None:
+                self._scaler = scaler
+            else:
+                self._scaler = RobustScaler()
+                self._scaler.fit(X)
             self.X = self._scaler.transform(X)
             self.y = self.trend.to_numpy()
         except Exception as e:
@@ -167,6 +172,7 @@ class StockDataset(Dataset):
                     {
                         "data": self._data,
                         "scaler": self._scaler,
+                        "stock": self._stock,
                     },
                     f,
                     protocol=pickle.HIGHEST_PROTOCOL,
@@ -187,3 +193,7 @@ class StockDataset(Dataset):
     @property
     def scaler(self):
         return self._scaler
+
+    @property
+    def stock(self):
+        return self._stock
