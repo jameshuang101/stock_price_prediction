@@ -91,8 +91,8 @@ def get_stock_data(
 def get_macro_data(
     fred_api_key: str,
     ticker: str = "EFFR UNRATE UMCSENT ^VIX DX-Y.NYB",
-    start_date=None,
-    end_date=None,
+    start_date: Optional[str | datetime] = None,
+    end_date: Optional[str | datetime] = None,
     save_as: Optional[str] = None,
 ) -> pd.DataFrame:
     """
@@ -124,19 +124,25 @@ def get_macro_data(
         res_df = pd.DataFrame()
         # Grab each series individually and merge into dataframe
 
+        if type(start_date) == str:
+            start_date = dateparser.parse(start_date)
+
+        if type(end_date) == str:
+            end_date = dateparser.parse(end_date)
+
         for tk in tickers:
             # Try to grab from FRED API first
             if check_available_yf(tk) == False:
                 if start_date and end_date:
                     res = fr.get_series(
                         series_id=tk,
-                        observation_start=start_date,
+                        observation_start=start_date.replace(day=1),
                         observation_end=end_date,
                     )
                 elif start_date and not end_date:
                     res = fr.get_series(
                         series_id=tk,
-                        observation_start=start_date,
+                        observation_start=start_date.replace(day=1),
                         observation_end=date.today(),
                     )
                 else:
@@ -186,7 +192,11 @@ def check_available_yf(asset: str) -> bool:
     return len(info) > 0
 
 
-def is_market_day(date=None, start_date=None, end_date=None) -> bool:
+def is_market_day(
+    date: Optional[str | datetime] = None,
+    start_date: Optional[str | datetime] = None,
+    end_date: Optional[str | datetime] = None,
+) -> bool:
     """
     Checks if a given date is a market day.
     """
@@ -208,7 +218,10 @@ def is_market_day(date=None, start_date=None, end_date=None) -> bool:
     return result.empty == False
 
 
-def get_market_days(start_date, end_date):
+def get_market_days(
+    start_date: Optional[str | datetime],
+    end_date: Optional[str | datetime],
+):
     """
     Get the market days between two dates.
     """
@@ -220,12 +233,12 @@ def get_market_days(start_date, end_date):
         market_days = market_calendar.valid_days(
             start_date=start_date, end_date=end_date
         )
-        return market_days
+        return market_days.to_pydatetime()
     except Exception as e:
         raise CustomException(e, sys)
 
 
-def get_lead_days(date=None, lead_days: int = 18):
+def get_lead_days(date: Optional[str | datetime] = None, lead_days: int = 18):
     """
     Get the N market days of lead data for feature engineering immediately preceding a date (Defaults to 18 lead days).
     """
