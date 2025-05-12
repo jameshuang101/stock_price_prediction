@@ -5,6 +5,7 @@ import math
 import numpy as np
 from skimage.restoration import denoise_wavelet
 from src.exception import CustomException
+from scipy import signal
 
 
 def discrete_wavelet_transform(
@@ -110,5 +111,31 @@ def get_trend(df: pd.DataFrame, column: str = "Close", first: float = 0.0) -> pd
             if df[column].iloc[i] <= df[column].iloc[i + 1]:
                 trend[i] = 1.0
         return pd.Series(trend, index=df.index, name="Trend")
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def get_peaks(df: pd.DataFrame, column: str = "Close") -> pd.Series:
+    """
+    Computes the peaks of the given column in the DataFrame.
+    """
+    try:
+        peaks = np.zeros(len(df), dtype=np.float32)
+        peak_inds, _ = signal.find_peaks(df[column])
+        peaks[peak_inds] = 1.0
+        return pd.Series(peaks, index=df.index, name="Peaks")
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def get_valleys(df: pd.DataFrame, column: str = "Close") -> pd.Series:
+    """
+    Computes the valleys of the given column in the DataFrame.
+    """
+    try:
+        valleys = np.zeros(len(df), dtype=np.float32)
+        valley_inds, _ = signal.find_peaks(-df[column])
+        valleys[valley_inds] = 1.0
+        return pd.Series(valleys, index=df.index, name="Valleys")
     except Exception as e:
         raise CustomException(e, sys)

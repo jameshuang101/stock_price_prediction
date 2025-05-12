@@ -19,9 +19,9 @@ from torch.nn import BCEWithLogitsLoss, Sigmoid
 
 
 # Define LSTM classifier model
-class LSTMClassifier(nn.Module):
+class LSTMBinaryClassifier(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, output_size):
-        super(LSTMClassifier, self).__init__()
+        super(LSTMBinaryClassifier, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.lstm = nn.LSTM(
@@ -40,7 +40,6 @@ class LSTMClassifier(nn.Module):
         out = self.dropout(out)
         out = self.relu(out)
         out = self.fc_2(out)
-        # out = BCEWithLogitsLoss()(out, reduction="none")
         return out
 
 

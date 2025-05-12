@@ -28,7 +28,6 @@ class MLPClassifier(nn.Module):
 
         # Last hidden layer to the output layer
         layers.append(nn.Linear(prev_size, output_size))
-        layers.append(nn.Softmax(dim=1))
 
         # Combine all layers into a sequential module
         self.model = nn.Sequential(*layers)
@@ -36,11 +35,5 @@ class MLPClassifier(nn.Module):
     def forward(self, x):
         """
         Forward pass through the network.
-
-        Args:
-            x (torch.Tensor): Input tensor.
-
-        Returns:
-            torch.Tensor: Output tensor.
         """
         return self.model(x)

@@ -4,6 +4,7 @@ import numpy as np
 from src.logger import logging
 from typing import List, Optional, Tuple
 from src.exception import CustomException
+from src.utils import save_object, load_object
 import dateparser
 from src.preprocessing import (
     data_cleaning,
@@ -43,8 +44,7 @@ class StockDataset(Dataset):
         if dict_path is not None:
             logging.info("Loading data dict from file...")
             try:
-                with open(dict_path, "rb") as f:
-                    data_dict = pickle.load(f)
+                data_dict = load_object(file_path=dict_path)
                 self._stock = data_dict["stock"]
                 self._data = data_dict["data"]
                 self._scaler = data_dict["scaler"]
@@ -167,16 +167,12 @@ class StockDataset(Dataset):
 
     def save_data_dict(self, dict_path: str):
         try:
-            with open(dict_path, "wb") as f:
-                pickle.dump(
-                    {
-                        "data": self._data,
-                        "scaler": self._scaler,
-                        "stock": self._stock,
-                    },
-                    f,
-                    protocol=pickle.HIGHEST_PROTOCOL,
-                )
+            data_dict = {
+                "data": self._data,
+                "scaler": self._scaler,
+                "stock": self._stock,
+            }
+            save_object(file_path=dict_path, obj=data_dict)
         except Exception as e:
             raise CustomException(f"Failed to save data dict: {e}", sys)
 
