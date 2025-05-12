@@ -18,6 +18,7 @@ def get_stock_data(
     end_date=None,
     period: Optional[str] = None,
     features: List[str] = ["Open", "High", "Low", "Close", "Volume"],
+    as_json: bool = False,
     save_as: Optional[str] = None,
 ) -> pd.DataFrame:
     """
@@ -84,6 +85,9 @@ def get_stock_data(
                 pass
         except Exception as e:
             raise CustomException(e, sys)
+
+    if as_json:
+        return res_df.to_json(orient="index", date_unit="s")
     return res_df
 
 
@@ -93,6 +97,7 @@ def get_macro_data(
     ticker: str = "EFFR UNRATE UMCSENT ^VIX DX-Y.NYB",
     start_date: Optional[str | datetime] = None,
     end_date: Optional[str | datetime] = None,
+    as_json: bool = False,
     save_as: Optional[str] = None,
 ) -> pd.DataFrame:
     """
@@ -175,6 +180,9 @@ def get_macro_data(
                     "Invalid extension. Should be one of (.json, .pickle, .pkl, .csv)"
                 )
                 pass
+
+        if as_json:
+            return res_df.to_json(orient="index", date_unit="s")
         return res_df
 
     except Exception as e:
