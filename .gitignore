@@ -2,6 +2,8 @@ backend/notebooks/
 artifacts/logs/
 backend/logs/
 backend/wandb/
+logs/
+backend/ray_results/
 
 *.swp
 *.egg-info

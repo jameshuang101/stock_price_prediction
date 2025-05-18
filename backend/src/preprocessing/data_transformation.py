@@ -32,34 +32,6 @@ def discrete_wavelet_transform(
         raise CustomException(e, sys)
 
 
-def train_val_test_ordered_split(
-    df: pd.DataFrame, train_split: float = 0.64, val_split: float = 0.16
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """
-    Orders the data and organizes it into training, validation and testing dataframes.
-
-    Args:
-        df (pd.DataFrame): Input DataFrame.
-        train_split (float, optional): Fraction of data to use for training. Defaults to 0.64.
-        val_split (float, optional): Fraction of data to use for validation. Defaults to 0.16.
-
-    Returns:
-        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: Train, val and test dataframes.
-    """
-    try:
-        df_copy = df.sort_index()
-        train_inds = (0, math.ceil(len(df_copy) * train_split))
-        val_inds = (train_inds[1], train_inds[1] + math.ceil(len(df_copy) * val_split))
-        test_inds = (val_inds[1], len(df_copy))
-        return (
-            df_copy.iloc[: train_inds[1]],
-            df_copy.iloc[val_inds[0] : val_inds[1]],
-            df_copy.iloc[test_inds[0] :],
-        )
-    except Exception as e:
-        raise CustomException(e, sys)
-
-
 def lookback_format(
     df: pd.DataFrame,
     window: int = 15,
