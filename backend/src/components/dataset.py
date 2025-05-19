@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, TensorDataset
 import numpy as np
 from src.logger import logging
 from typing import List, Optional, Tuple
@@ -21,8 +21,11 @@ import pickle
 from os.path import join, dirname, abspath
 from sklearn.preprocessing import RobustScaler, StandardScaler
 from datetime import datetime, date, timedelta
+from pathlib import Path
 
-API_KEYS_PATH = join(abspath(dirname(dirname(os.getcwd()))), "api_keys.yml")
+API_KEYS_PATH = join(
+    Path(__file__).parent.parent.parent.parent.resolve(), "api_keys.yml"
+)
 try:
     with open(API_KEYS_PATH, "r") as f:
         FRED_API_KEY = yaml.safe_load(f)["fred_api_key"]
@@ -40,6 +43,7 @@ class StockDataset(Dataset):
         date: Optional[str | datetime] = None,
         start_date: Optional[str | datetime] = None,
         end_date: Optional[str | datetime] = None,
+        targets: Optional[List[str]] = ["trend", "peaks", "valleys"],
     ):
         if dict_path is not None:
             logging.info("Loading data dict from file...")
@@ -48,13 +52,25 @@ class StockDataset(Dataset):
                 self._stock = data_dict["stock"]
                 self._data = data_dict["data"]
                 self._scaler = data_dict["scaler"]
-                self.trend = data_transformation.get_trend(self._data)
                 self.X = self._scaler.transform(
                     self._data.drop(
                         columns=["Open", "Close", "High", "Low", "Volume"]
-                    ).to_numpy()
+                    ).to_numpy(dtype=np.float32)
                 )
-                self.y = self.trend.to_numpy()
+                targets_dict = dict()
+                targets_dict["trend"] = data_transformation.get_trend(
+                    self._data
+                ).to_numpy(dtype=np.float32)
+                targets_dict["peaks"] = data_transformation.get_peaks(
+                    self._data
+                ).to_numpy(dtype=np.float32)
+                targets_dict["valleys"] = data_transformation.get_valleys(
+                    self._data
+                ).to_numpy(dtype=np.float32)
+                self.y = np.stack(
+                    [targets_dict[target] for target in targets],
+                    axis=1,
+                )
             except Exception as e:
                 logging.info(f"Failed to load data dict: {e}")
                 raise CustomException(e, sys)
@@ -126,7 +142,16 @@ class StockDataset(Dataset):
         try:
             self._data = data_cleaning.remove_inf_and_nan(self._data, behavior="impute")
             self._data = self._data.loc[start_date:]
-            self.trend = self.trend.loc[start_date:]
+            targets_dict = dict()
+            targets_dict["trend"] = data_transformation.get_trend(self._data).to_numpy(
+                dtype=np.float32
+            )
+            targets_dict["peaks"] = data_transformation.get_peaks(self._data).to_numpy(
+                dtype=np.float32
+            )
+            targets_dict["valleys"] = data_transformation.get_valleys(
+                self._data
+            ).to_numpy(dtype=np.float32)
         except Exception as e:
             logging.info(f"Failed to format and clean data: {e}")
             raise CustomException(e, sys)
@@ -151,14 +176,17 @@ class StockDataset(Dataset):
         try:
             X = self._data.drop(
                 columns=["Open", "Close", "High", "Low", "Volume"]
-            ).to_numpy()
+            ).to_numpy(dtype=np.float32)
             if scaler is not None:
                 self._scaler = scaler
             else:
                 self._scaler = RobustScaler()
                 self._scaler.fit(X)
             self.X = self._scaler.transform(X)
-            self.y = self.trend.to_numpy()
+            self.y = np.stack(
+                [targets_dict[target] for target in targets],
+                axis=1,
+            )
         except Exception as e:
             logging.info(f"Failed to scale data: {e}")
             raise CustomException(e, sys)

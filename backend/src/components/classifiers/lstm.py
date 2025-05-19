@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as data
-from torcheval.metrics.functional import r2_score
-import wandb
+
+# from torcheval.metrics.functional import r2_score
+# import wandb
 import math
 import os
 import pandas as pd
