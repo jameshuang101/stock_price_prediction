@@ -20,12 +20,12 @@ def remove_inf_and_nan(
     """
     df = df.replace([np.inf, -np.inf], np.nan)
     if behavior == "impute":
-        for col in df.columns:
-            inds = np.where(df[col].isna())[0]
+        for c in range(len(df.columns)):
+            inds = np.where(df.iloc[:, c].isna())[0]
             for i in inds:
-                df.iloc[i][col] = df.iloc[
-                    max(0, i - window // 2) : min(len(df), i + window // 2)
-                ][col].mean()
+                df.iat[i, c] = df.iloc[
+                    max(0, i - window // 2) : min(len(df), i + window // 2), c
+                ].mean()
     elif behavior == "mean":
         for col in df.columns:
             df.fillna(df[col].mean(), inplace=True)

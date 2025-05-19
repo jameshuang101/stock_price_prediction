@@ -11,7 +11,7 @@ class MLPClassifier(nn.Module):
         input_size: int,
         output_size: int,
         hidden_layers: List[int],
-        activation="tanh",
+        activation: str = "tanh",
         dropout: float = 0.0,
     ):
         """

@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, TensorDataset
 import numpy as np
 from src.logger import logging
 from typing import List, Optional, Tuple
@@ -55,18 +55,18 @@ class StockDataset(Dataset):
                 self.X = self._scaler.transform(
                     self._data.drop(
                         columns=["Open", "Close", "High", "Low", "Volume"]
-                    ).to_numpy()
+                    ).to_numpy(dtype=np.float32)
                 )
                 targets_dict = dict()
                 targets_dict["trend"] = data_transformation.get_trend(
                     self._data
-                ).to_numpy()
+                ).to_numpy(dtype=np.float32)
                 targets_dict["peaks"] = data_transformation.get_peaks(
                     self._data
-                ).to_numpy()
+                ).to_numpy(dtype=np.float32)
                 targets_dict["valleys"] = data_transformation.get_valleys(
                     self._data
-                ).to_numpy()
+                ).to_numpy(dtype=np.float32)
                 self.y = np.stack(
                     [targets_dict[target] for target in targets],
                     axis=1,
@@ -143,11 +143,15 @@ class StockDataset(Dataset):
             self._data = data_cleaning.remove_inf_and_nan(self._data, behavior="impute")
             self._data = self._data.loc[start_date:]
             targets_dict = dict()
-            targets_dict["trend"] = data_transformation.get_trend(self._data).to_numpy()
-            targets_dict["peaks"] = data_transformation.get_peaks(self._data).to_numpy()
+            targets_dict["trend"] = data_transformation.get_trend(self._data).to_numpy(
+                dtype=np.float32
+            )
+            targets_dict["peaks"] = data_transformation.get_peaks(self._data).to_numpy(
+                dtype=np.float32
+            )
             targets_dict["valleys"] = data_transformation.get_valleys(
                 self._data
-            ).to_numpy()
+            ).to_numpy(dtype=np.float32)
         except Exception as e:
             logging.info(f"Failed to format and clean data: {e}")
             raise CustomException(e, sys)
@@ -172,7 +176,7 @@ class StockDataset(Dataset):
         try:
             X = self._data.drop(
                 columns=["Open", "Close", "High", "Low", "Volume"]
-            ).to_numpy()
+            ).to_numpy(dtype=np.float32)
             if scaler is not None:
                 self._scaler = scaler
             else:
