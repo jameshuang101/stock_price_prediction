@@ -350,11 +350,11 @@ def price_volume(
     ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
 ) -> pd.Series:
     """
-    Calculates the price-volume ratio (PVR) over the input data.
+    Calculates the price-volume (PV) over the input data.
     """
     try:
-        avg_price = data[ohlcv_cols[:-1]].mean(axis=1)
-        return data[ohlcv_cols[2]] * avg_price / 1000.0
+        avg_price = data[[*ohlcv_cols[:-1]]].mean(axis=1)
+        return data[ohlcv_cols[-1]] * avg_price / 1000.0
     except Exception as e:
         raise CustomException(e, sys)
 
@@ -362,10 +362,10 @@ def price_volume(
 def get_technical_indicators(
     df: pd.DataFrame,
     ohlcv_cols: Tuple[str, str, str, str] = (
+        "Open",
         "High",
         "Low",
         "Close",
-        "Open",
         "Volume",
     ),
     inplace: bool = True,
@@ -386,21 +386,21 @@ def get_technical_indicators(
         df_copy["ADX"] = adx(df_copy, period=14, ohlcv_cols=ohlcv_cols)
         df_copy["Williams_R"] = williams_r(df_copy, period=14, ohlcv_cols=ohlcv_cols)
         log_params = [
-            ("Close", "Close", 0, 1),
-            ("Close", "Close", 1, 2),
-            ("Close", "Close", 2, 3),
-            ("Close", "Close", 3, 4),
-            ("High", "Open", 0, 0),
-            ("High", "Open", 0, 1),
-            ("High", "Open", 0, 2),
-            ("High", "Open", 0, 3),
-            ("High", "Open", 1, 1),
-            ("High", "Open", 2, 2),
-            ("High", "Open", 3, 3),
-            ("Low", "Open", 0, 0),
-            ("Low", "Open", 1, 1),
-            ("Low", "Open", 2, 2),
-            ("Low", "Open", 3, 3),
+            (ohlcv_cols[3], ohlcv_cols[3], 0, 1),
+            (ohlcv_cols[3], ohlcv_cols[3], 1, 2),
+            (ohlcv_cols[3], ohlcv_cols[3], 2, 3),
+            (ohlcv_cols[3], ohlcv_cols[3], 3, 4),
+            (ohlcv_cols[1], ohlcv_cols[2], 0, 0),
+            (ohlcv_cols[1], ohlcv_cols[2], 0, 1),
+            (ohlcv_cols[1], ohlcv_cols[2], 0, 2),
+            (ohlcv_cols[1], ohlcv_cols[2], 0, 3),
+            (ohlcv_cols[1], ohlcv_cols[2], 1, 1),
+            (ohlcv_cols[1], ohlcv_cols[2], 2, 2),
+            (ohlcv_cols[1], ohlcv_cols[2], 3, 3),
+            (ohlcv_cols[2], ohlcv_cols[0], 0, 0),
+            (ohlcv_cols[2], ohlcv_cols[0], 1, 1),
+            (ohlcv_cols[2], ohlcv_cols[0], 2, 2),
+            (ohlcv_cols[2], ohlcv_cols[0], 3, 3),
         ]
         i = 1
         for col1, col2, shift1, shift2 in log_params:

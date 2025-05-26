@@ -19,7 +19,7 @@ import yaml
 import os
 import pickle
 from os.path import join, dirname, abspath
-from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.preprocessing import RobustScaler, StandardScaler, MinMaxScaler
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
@@ -39,7 +39,7 @@ class StockDataset(Dataset):
         self,
         stock: Optional[str] = None,
         dict_path: Optional[str] = None,
-        scaler: Optional[RobustScaler | StandardScaler] = None,
+        scaler: Optional[RobustScaler | StandardScaler | MinMaxScaler] = None,
         date: Optional[str | datetime] = None,
         start_date: Optional[str | datetime] = None,
         end_date: Optional[str | datetime] = None,
@@ -174,13 +174,13 @@ class StockDataset(Dataset):
 
         logging.info("Scaling data...")
         try:
-            X = self._data.drop(
-                columns=["Open", "Close", "High", "Low", "Volume"]
-            ).to_numpy(dtype=np.float32)
+            X = self._data.drop(columns=["Open", "Close", "High", "Low"]).to_numpy(
+                dtype=np.float32
+            )
             if scaler is not None:
                 self._scaler = scaler
             else:
-                self._scaler = RobustScaler()
+                self._scaler = MinMaxScaler(feature_range=(0, 1))
                 self._scaler.fit(X)
             self.X = self._scaler.transform(X)
             self.y = np.stack(
