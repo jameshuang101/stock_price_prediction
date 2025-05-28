@@ -7,7 +7,7 @@ import dateparser
 import pickle
 import json
 import sys
-from src.exception import CustomException
+from stock_prediction.exception import CustomException
 import pandas_market_calendars as mcal
 
 

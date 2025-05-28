@@ -4,15 +4,15 @@ import numpy as np
 import sys
 import pandas as pd
 from typing import List, Optional, Tuple
-from src.preprocessing import (
+from stock_prediction.preprocessing import (
     data_ingestion,
     data_transformation,
     indicators,
     data_cleaning,
 )
 import dateparser
-from src.logger import logging
-from src.exception import CustomException
+from stock_prediction.logger import logging
+from stock_prediction.exception import CustomException
 from os.path import join, dirname, abspath
 import joblib
 import yaml

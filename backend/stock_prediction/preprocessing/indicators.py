@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import math
 import numpy as np
 from skimage.restoration import denoise_wavelet
-from src.exception import CustomException
+from stock_prediction.exception import CustomException
 import time
 
 
@@ -83,7 +83,13 @@ def hma(data: pd.DataFrame, period: int = 14, column: str = "Close") -> pd.Serie
 def stochastic_oscillator(
     data: pd.DataFrame,
     period: int = 14,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
     inplace: bool = True,
 ) -> pd.DataFrame:
     """
@@ -112,7 +118,13 @@ def stochastic_oscillator(
 def williams_r(
     data: pd.DataFrame,
     period: int,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the Williams %R for given period over the input data.
@@ -128,7 +140,13 @@ def williams_r(
 def cci(
     data: pd.DataFrame,
     period: int = 40,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the commodity channel index (CCI) for given period over the input data.
@@ -174,7 +192,13 @@ def rma(s: pd.Series, period: int) -> pd.Series:
 
 def tr(
     data: pd.DataFrame,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the true range (TR) over the input data.
@@ -196,7 +220,13 @@ def tr(
 def atr(
     data: pd.DataFrame,
     period: int = 14,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the average true range (ATR) over the input data for a particular period of time.
@@ -229,7 +259,13 @@ def rsi(data: pd.DataFrame, period: int = 14, column: str = "Close") -> pd.Serie
 def di(
     data: pd.DataFrame,
     period: int = 14,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the directional index (DI) over the input data for a particular period of time.
@@ -254,7 +290,13 @@ def di(
 def adx(
     data: pd.DataFrame,
     period: int = 14,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the average directional index (ADX) over the input data for a particular period of time.
@@ -270,7 +312,13 @@ def psar(
     data: pd.DataFrame,
     af: float = 0.02,
     max: float = 0.2,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the PSAR (Percentage Strengthening) for a given stock.
@@ -347,7 +395,13 @@ def psar(
 
 def price_volume(
     data: pd.DataFrame,
-    ohlcv_cols: Tuple[str, str, str] = ("Open", "High", "Low", "Close", "Volume"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the price-volume (PV) over the input data.
@@ -359,9 +413,76 @@ def price_volume(
         raise CustomException(e, sys)
 
 
-def get_technical_indicators(
+def obv(
+    data: pd.DataFrame,
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
+) -> pd.Series:
+    """
+    Calculates the On-Balance Volume (OBV) over the input data.
+    """
+    try:
+        obv = (
+            (np.sign(data[ohlcv_cols[3]].diff()) * data[ohlcv_cols[-1]])
+            .fillna(0)
+            .cumsum()
+        ) / 1000.0
+        return pd.Series(obv, index=data.index)
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def bias(
+    data: pd.DataFrame,
+    period: int = 6,
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
+):
+    """
+    Calculates the bias over the input data.
+    """
+    try:
+        MA = sma(data, period=period, column=ohlcv_cols[3])
+        return 100 * (data[ohlcv_cols[3]] - MA) / MA
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def psy(
+    data: pd.DataFrame,
+    period: int = 12,
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
+):
+    """
+    Calculates the Psyhological Line (PSY) over the input data.
+    """
+    try:
+        trend = np.sign(data[ohlcv_cols[3]].diff())
+        trend[trend < 0] = 0.0
+        return pd.Series(trend, index=data.index).rolling(period).sum() / period * 100
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def get_technical_indicators_v1(
     df: pd.DataFrame,
-    ohlcv_cols: Tuple[str, str, str, str] = (
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
         "Open",
         "High",
         "Low",
@@ -407,6 +528,44 @@ def get_technical_indicators(
             df_copy[f"r{i}"] = log_price(df_copy, col1, col2, shift1, shift2)
             i += 1
         df_copy = stochastic_oscillator(df_copy, period=14, ohlcv_cols=ohlcv_cols)
+        if inplace:
+            df = df_copy
+        return df_copy
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def get_technical_indicators_v2(
+    df: pd.DataFrame,
+    ohlcv_cols: Tuple[str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
+    inplace: bool = True,
+) -> Optional[pd.DataFrame]:
+    """
+    Computes technical indicators for the given DataFrame.
+    """
+    try:
+        df_copy = df.copy()
+        df_copy["OBV"] = obv(df_copy, ohlcv_cols=ohlcv_cols)
+        df_copy["SMA"] = sma(df_copy, period=5, column=ohlcv_cols[3])
+        df_copy["Bias"] = bias(df_copy, period=6, ohlcv_cols=ohlcv_cols)
+        df_copy["PSY"] = psy(df_copy, period=12, ohlcv_cols=ohlcv_cols)
+        SY = (
+            log_price(
+                df_copy, col1=ohlcv_cols[3], col2=ohlcv_cols[3], shift1=0, shift2=1
+            )
+            * 100
+        )
+        df_copy["ASY5"] = SY.rolling(window=5).mean()
+        df_copy["ASY4"] = SY.rolling(window=4).mean()
+        df_copy["ASY3"] = SY.rolling(window=3).mean()
+        df_copy["ASY2"] = SY.rolling(window=2).mean()
+        df_copy["ASY1"] = log_price(df_copy, col1=ohlcv_cols[3], col2=ohlcv_cols[3], shift1=1, shift2=2) * 100
         if inplace:
             df = df_copy
         return df_copy

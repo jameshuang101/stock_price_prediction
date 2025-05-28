@@ -4,12 +4,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision
-import torchvision.transforms as transforms
-from ray import tune
-from ray import train
-from ray.train import Checkpoint, get_checkpoint
-from ray.tune.schedulers import ASHAScheduler
-import ray.cloudpickle as pickle
 
 # from torcheval.metrics.functional import r2_score
 # import wandb
@@ -17,11 +11,11 @@ import math
 import os
 import pandas as pd
 import numpy as np
-from src.utils import save_model
-from src.exception import CustomException
+from stock_prediction.utils import save_model
+from stock_prediction.exception import CustomException
 from sklearn.preprocessing import StandardScaler
-from src.components.classifiers import mlp
-from src.components.dataset import StockDataset
+from stock_prediction.components.classifiers import mlp
+from stock_prediction.components.dataset import StockDataset
 from functools import partial
 import tempfile
 from pathlib import Path
