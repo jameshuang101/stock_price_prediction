@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import math
 import numpy as np
 from skimage.restoration import denoise_wavelet
-from src.exception import CustomException
+from stock_prediction.exception import CustomException
 import time
 
 
@@ -83,7 +83,13 @@ def hma(data: pd.DataFrame, period: int = 14, column: str = "Close") -> pd.Serie
 def stochastic_oscillator(
     data: pd.DataFrame,
     period: int = 14,
-    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
     inplace: bool = True,
 ) -> pd.DataFrame:
     """
@@ -96,11 +102,9 @@ def stochastic_oscillator(
         df = data.copy()
         Fast_K = np.full(len(df), np.nan)
         for i in range(period, len(df)):
-            LOW14 = df.iloc[i - period : i][high_low_close_cols[1]].min()
-            HIGH14 = df.iloc[i - period : i][high_low_close_cols[0]].max()
-            Fast_K[i] = (
-                100 * (df.iloc[i][high_low_close_cols[2]] - LOW14) / (HIGH14 - LOW14)
-            )
+            LOW14 = df.iloc[i - period : i][ohlcv_cols[2]].min()
+            HIGH14 = df.iloc[i - period : i][ohlcv_cols[1]].max()
+            Fast_K[i] = 100 * (df.iloc[i][ohlcv_cols[3]] - LOW14) / (HIGH14 - LOW14)
         df["Fast_K"] = Fast_K
         df["Fast_D"] = df["Fast_K"].rolling(3).mean()
         df["Slow_D"] = df["Fast_D"].rolling(3).mean()
@@ -114,15 +118,21 @@ def stochastic_oscillator(
 def williams_r(
     data: pd.DataFrame,
     period: int,
-    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the Williams %R for given period over the input data.
     """
     try:
-        highh = data[high_low_close_cols[0]].rolling(window=period).max()
-        lowl = data[high_low_close_cols[1]].rolling(window=period).min()
-        return -100 * ((highh - data[high_low_close_cols[2]]) / (highh - lowl))
+        highh = data[ohlcv_cols[1]].rolling(window=period).max()
+        lowl = data[ohlcv_cols[2]].rolling(window=period).min()
+        return -100 * ((highh - data[ohlcv_cols[3]]) / (highh - lowl))
     except Exception as e:
         raise CustomException(e, sys)
 
@@ -130,18 +140,20 @@ def williams_r(
 def cci(
     data: pd.DataFrame,
     period: int = 40,
-    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the commodity channel index (CCI) for given period over the input data.
     """
     try:
-        TP = (
-            data[high_low_close_cols[0]]
-            + data[high_low_close_cols[1]]
-            + data[high_low_close_cols[2]]
-        ) / 3
-        SMA = sma(data, period=period, column=high_low_close_cols[2])
+        TP = (data[ohlcv_cols[1]] + data[ohlcv_cols[2]] + data[ohlcv_cols[3]]) / 3
+        SMA = sma(data, period=period, column=ohlcv_cols[3])
         mad = TP.rolling(window=period).apply(
             lambda x: np.mean(np.abs(x - np.mean(x))), raw=True
         )
@@ -180,16 +192,22 @@ def rma(s: pd.Series, period: int) -> pd.Series:
 
 def tr(
     data: pd.DataFrame,
-    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the true range (TR) over the input data.
     """
     try:
         high, low, prev_close = (
-            data[high_low_close_cols[0]],
-            data[high_low_close_cols[1]],
-            data[high_low_close_cols[2]].shift(),
+            data[ohlcv_cols[1]],
+            data[ohlcv_cols[2]],
+            data[ohlcv_cols[3]].shift(),
         )
         tr_all = [high - low, high - prev_close, low - prev_close]
         tr_all = [tr.abs() for tr in tr_all]
@@ -202,13 +220,19 @@ def tr(
 def atr(
     data: pd.DataFrame,
     period: int = 14,
-    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the average true range (ATR) over the input data for a particular period of time.
     """
     try:
-        return rma(tr(data, high_low_close_cols), period)
+        return rma(tr(data, ohlcv_cols), period)
     except Exception as e:
         raise CustomException(e, sys)
 
@@ -235,18 +259,24 @@ def rsi(data: pd.DataFrame, period: int = 14, column: str = "Close") -> pd.Serie
 def di(
     data: pd.DataFrame,
     period: int = 14,
-    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the directional index (DI) over the input data for a particular period of time.
     """
     try:
         di_plus = 100 * (
-            data[high_low_close_cols[0]].diff().ewm(span=period, adjust=False).mean()
-            / atr(data, period=period, high_low_close_cols=high_low_close_cols)
+            data[ohlcv_cols[1]].diff().ewm(span=period, adjust=False).mean()
+            / atr(data, period=period, ohlcv_cols=ohlcv_cols)
         )
         di_minus = 100 * (
-            data[high_low_close_cols[1]]
+            data[ohlcv_cols[2]]
             .diff(periods=-1)
             .shift(1)
             .ewm(span=period, adjust=False)
@@ -260,13 +290,19 @@ def di(
 def adx(
     data: pd.DataFrame,
     period: int = 14,
-    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
     Calculates the average directional index (ADX) over the input data for a particular period of time.
     """
     try:
-        DI = di(data, period=period, high_low_close_cols=high_low_close_cols)
+        DI = di(data, period=period, ohlcv_cols=ohlcv_cols)
         return ((DI.shift(1) * (period - 1)) + DI) / period
     except Exception as e:
         raise CustomException(e, sys)
@@ -276,15 +312,24 @@ def psar(
     data: pd.DataFrame,
     af: float = 0.02,
     max: float = 0.2,
-    high_low_close_cols: Tuple[str, str, str] = ("High", "Low", "Close"),
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
+    """
+    Calculates the PSAR (Percentage Strengthening) for a given stock.
+    """
     try:
         AF = np.full(len(data), np.nan)
         AF[0] = af
         PSAR = np.full(len(data), np.nan)
-        PSAR[0] = data.iloc[0][high_low_close_cols[1]]
+        PSAR[0] = data.iloc[0][ohlcv_cols[2]]
         EP = np.full(len(data), np.nan)
-        EP[0] = data.iloc[0][high_low_close_cols[0]]
+        EP[0] = data.iloc[0][ohlcv_cols[1]]
         PSARdir = ["bull"] + [""] * (len(data) - 1)
 
         for i in range(1, len(data)):  # start on second data row
@@ -293,16 +338,16 @@ def psar(
                 PSAR[i] = PSAR[prev_i] + (AF[prev_i] * (EP[prev_i] - PSAR[prev_i]))
                 PSARdir[i] = "bull"
 
-                if (data.iloc[i][high_low_close_cols[1]] < PSAR[prev_i]) or (
-                    data.iloc[i][high_low_close_cols[1]] < PSAR[i]
+                if (data.iloc[i][ohlcv_cols[2]] < PSAR[prev_i]) or (
+                    data.iloc[i][ohlcv_cols[2]] < PSAR[i]
                 ):
                     PSARdir[i] = "bear"
                     PSAR[i] = EP[prev_i]
-                    EP[i] = data.iloc[prev_i][high_low_close_cols[1]]
+                    EP[i] = data.iloc[prev_i][ohlcv_cols[2]]
                     AF[i] = af
                 else:
-                    if data.iloc[i][high_low_close_cols[0]] > EP[prev_i]:
-                        EP[i] = data.iloc[i][high_low_close_cols[0]]
+                    if data.iloc[i][ohlcv_cols[1]] > EP[prev_i]:
+                        EP[i] = data.iloc[i][ohlcv_cols[1]]
                         AF[i] = min(max, AF[prev_i] + af)
                     else:
                         AF[i] = AF[prev_i]
@@ -313,16 +358,16 @@ def psar(
                 PSARdir[i] = "bear"
 
                 if (
-                    data.iloc[i][high_low_close_cols[0]] > PSAR[prev_i]
-                    or data.iloc[i][high_low_close_cols[0]] > PSAR[i]
+                    data.iloc[i][ohlcv_cols[1]] > PSAR[prev_i]
+                    or data.iloc[i][ohlcv_cols[1]] > PSAR[i]
                 ):
                     PSARdir[i] = "bull"
                     PSAR[i] = EP[prev_i]
-                    EP[i] = data.iloc[prev_i][high_low_close_cols[0]]
+                    EP[i] = data.iloc[prev_i][ohlcv_cols[1]]
                     AF[i] = af
                 else:
-                    if data.iloc[i][high_low_close_cols[1]] < EP[prev_i]:
-                        EP[i] = data.iloc[i][high_low_close_cols[1]]
+                    if data.iloc[i][ohlcv_cols[2]] < EP[prev_i]:
+                        EP[i] = data.iloc[i][ohlcv_cols[2]]
                         AF[i] = min(max, AF[prev_i] + af)
                     else:
                         AF[i] = AF[prev_i]
@@ -333,81 +378,194 @@ def psar(
         raise CustomException(e, sys)
 
 
-def overnight_percent_diff(
-    data: pd.DataFrame, open_close_cols: Tuple[str, str] = ("Open", "Close")
+# def overnight_percent_diff(
+#     data: pd.DataFrame, open_close_cols: Tuple[str, str] = ("Open", "Close")
+# ) -> pd.Series:
+#     """
+#     Calculates the percent change overnight during market closed hours.
+#     """
+#     try:
+#         return 100 * (
+#             (data[open_close_cols[0]] - data[open_close_cols[1]].shift(1))
+#             / data[open_close_cols[1]].shift(1)
+#         )
+#     except Exception as e:
+#         raise CustomException(e, sys)
+
+
+def price_volume(
+    data: pd.DataFrame,
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
 ) -> pd.Series:
     """
-    Calculates the percent change overnight during market closed hours.
+    Calculates the price-volume (PV) over the input data.
     """
     try:
-        return 100 * (
-            (data[open_close_cols[0]] - data[open_close_cols[1]].shift(1))
-            / data[open_close_cols[1]].shift(1)
-        )
+        avg_price = data[[*ohlcv_cols[:-1]]].mean(axis=1)
+        return data[ohlcv_cols[-1]] * avg_price / 1000.0
     except Exception as e:
         raise CustomException(e, sys)
 
 
-def get_technical_indicators(
-    df: pd.DataFrame,
-    high_low_close_open_cols: Tuple[str, str, str, str] = (
+def obv(
+    data: pd.DataFrame,
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
         "High",
         "Low",
         "Close",
+        "Volume",
+    ),
+) -> pd.Series:
+    """
+    Calculates the On-Balance Volume (OBV) over the input data.
+    """
+    try:
+        obv = (
+            (np.sign(data[ohlcv_cols[3]].diff()) * data[ohlcv_cols[-1]])
+            .fillna(0)
+            .cumsum()
+        ) / 1000.0
+        return pd.Series(obv, index=data.index)
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def bias(
+    data: pd.DataFrame,
+    period: int = 6,
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
         "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
+):
+    """
+    Calculates the bias over the input data.
+    """
+    try:
+        MA = sma(data, period=period, column=ohlcv_cols[3])
+        return 100 * (data[ohlcv_cols[3]] - MA) / MA
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def psy(
+    data: pd.DataFrame,
+    period: int = 12,
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
+):
+    """
+    Calculates the Psyhological Line (PSY) over the input data.
+    """
+    try:
+        trend = np.sign(data[ohlcv_cols[3]].diff())
+        trend[trend < 0] = 0.0
+        return pd.Series(trend, index=data.index).rolling(period).sum() / period * 100
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def get_technical_indicators_v1(
+    df: pd.DataFrame,
+    ohlcv_cols: Tuple[str, str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
     ),
     inplace: bool = True,
 ) -> Optional[pd.DataFrame]:
     try:
         df_copy = df.copy()
-        df_copy["MACD"] = macd(df_copy, high_low_close_open_cols[2])
-        df_copy["TR"] = tr(df_copy, high_low_close_cols=high_low_close_open_cols[:-1])
-        df_copy["ATR"] = atr(
-            df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
-        )
-        df_copy["RSI"] = rsi(df_copy, period=14, column=high_low_close_open_cols[2])
-        df_copy["Momentum"] = momentum(
-            df_copy, shift=14, column=high_low_close_open_cols[2]
-        )
-        df_copy["PSAR"] = psar(
-            df_copy, af=0.02, max=0.2, high_low_close_cols=high_low_close_open_cols[:-1]
-        )
-        df_copy["CCI"] = cci(
-            df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
-        )
-        df_copy["SMA"] = sma(df_copy, period=14, column=high_low_close_open_cols[2])
-        df_copy["WMA"] = wma(df_copy, period=14, column=high_low_close_open_cols[2])
-        df_copy["HMA"] = hma(df_copy, period=14, column=high_low_close_open_cols[2])
-        df_copy["ADX"] = adx(
-            df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
-        )
-        df_copy["Williams_R"] = williams_r(
-            df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
-        )
+        df_copy["PV"] = price_volume(df_copy, ohlcv_cols=ohlcv_cols)
+        df_copy["MACD"] = macd(df_copy, ohlcv_cols[3])
+        df_copy["TR"] = tr(df_copy, ohlcv_cols=ohlcv_cols)
+        df_copy["ATR"] = atr(df_copy, period=14, ohlcv_cols=ohlcv_cols)
+        df_copy["RSI"] = rsi(df_copy, period=14, column=ohlcv_cols[3])
+        df_copy["Momentum"] = momentum(df_copy, shift=14, column=ohlcv_cols[3])
+        df_copy["PSAR"] = psar(df_copy, af=0.02, max=0.2, ohlcv_cols=ohlcv_cols)
+        df_copy["CCI"] = cci(df_copy, period=20, ohlcv_cols=ohlcv_cols)
+        df_copy["SMA"] = sma(df_copy, period=20, column=ohlcv_cols[3])
+        df_copy["WMA"] = wma(df_copy, period=20, column=ohlcv_cols[3])
+        df_copy["HMA"] = hma(df_copy, period=20, column=ohlcv_cols[3])
+        df_copy["ADX"] = adx(df_copy, period=14, ohlcv_cols=ohlcv_cols)
+        df_copy["Williams_R"] = williams_r(df_copy, period=14, ohlcv_cols=ohlcv_cols)
         log_params = [
-            ("Close", "Close", 0, 1),
-            ("Close", "Close", 1, 2),
-            ("Close", "Close", 2, 3),
-            ("Close", "Close", 3, 4),
-            ("High", "Open", 0, 0),
-            ("High", "Open", 0, 1),
-            ("High", "Open", 0, 2),
-            ("High", "Open", 0, 3),
-            ("High", "Open", 1, 1),
-            ("High", "Open", 2, 2),
-            ("High", "Open", 3, 3),
-            ("Low", "Open", 0, 0),
-            ("Low", "Open", 1, 1),
-            ("Low", "Open", 2, 2),
-            ("Low", "Open", 3, 3),
+            (ohlcv_cols[3], ohlcv_cols[3], 0, 1),
+            (ohlcv_cols[3], ohlcv_cols[3], 1, 2),
+            (ohlcv_cols[3], ohlcv_cols[3], 2, 3),
+            (ohlcv_cols[3], ohlcv_cols[3], 3, 4),
+            (ohlcv_cols[1], ohlcv_cols[2], 0, 0),
+            (ohlcv_cols[1], ohlcv_cols[2], 0, 1),
+            (ohlcv_cols[1], ohlcv_cols[2], 0, 2),
+            (ohlcv_cols[1], ohlcv_cols[2], 0, 3),
+            (ohlcv_cols[1], ohlcv_cols[2], 1, 1),
+            (ohlcv_cols[1], ohlcv_cols[2], 2, 2),
+            (ohlcv_cols[1], ohlcv_cols[2], 3, 3),
+            (ohlcv_cols[2], ohlcv_cols[0], 0, 0),
+            (ohlcv_cols[2], ohlcv_cols[0], 1, 1),
+            (ohlcv_cols[2], ohlcv_cols[0], 2, 2),
+            (ohlcv_cols[2], ohlcv_cols[0], 3, 3),
         ]
         i = 1
         for col1, col2, shift1, shift2 in log_params:
             df_copy[f"r{i}"] = log_price(df_copy, col1, col2, shift1, shift2)
             i += 1
-        df_copy = stochastic_oscillator(
-            df_copy, period=14, high_low_close_cols=high_low_close_open_cols[:-1]
+        df_copy = stochastic_oscillator(df_copy, period=14, ohlcv_cols=ohlcv_cols)
+        if inplace:
+            df = df_copy
+        return df_copy
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
+def get_technical_indicators_v2(
+    df: pd.DataFrame,
+    ohlcv_cols: Tuple[str, str, str, str] = (
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+    ),
+    inplace: bool = True,
+) -> Optional[pd.DataFrame]:
+    """
+    Computes technical indicators for the given DataFrame.
+    """
+    try:
+        df_copy = df.copy()
+        df_copy["OBV"] = obv(df_copy, ohlcv_cols=ohlcv_cols)
+        df_copy["SMA"] = sma(df_copy, period=5, column=ohlcv_cols[3])
+        df_copy["Bias"] = bias(df_copy, period=6, ohlcv_cols=ohlcv_cols)
+        df_copy["PSY"] = psy(df_copy, period=12, ohlcv_cols=ohlcv_cols)
+        SY = (
+            log_price(
+                df_copy, col1=ohlcv_cols[3], col2=ohlcv_cols[3], shift1=0, shift2=1
+            )
+            * 100
         )
+        df_copy["ASY5"] = SY.rolling(window=5).mean()
+        df_copy["ASY4"] = SY.rolling(window=4).mean()
+        df_copy["ASY3"] = SY.rolling(window=3).mean()
+        df_copy["ASY2"] = SY.rolling(window=2).mean()
+        df_copy["ASY1"] = log_price(df_copy, col1=ohlcv_cols[3], col2=ohlcv_cols[3], shift1=1, shift2=2) * 100
         if inplace:
             df = df_copy
         return df_copy

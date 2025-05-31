@@ -6,7 +6,7 @@ setup(
     author="James Huang",
     author_email="jhuan44044@gmail.com",
     packages=[
-        "app", "src"
+        "stock_prediction",
     ],
     long_description=open("README.md").read(),
 )

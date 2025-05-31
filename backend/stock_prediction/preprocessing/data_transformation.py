@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import math
 import numpy as np
 from skimage.restoration import denoise_wavelet
-from src.exception import CustomException
+from stock_prediction.exception import CustomException
 from scipy import signal
 
 
@@ -71,18 +71,14 @@ def lookback_format(
         raise CustomException(e, sys)
 
 
-def get_trend(df: pd.DataFrame, column: str = "Close", first: float = 0.0) -> pd.Series:
+def get_trend(df: pd.DataFrame, column: str = "Close") -> pd.Series:
     """
     Computes the trend of the given column in the DataFrame.
     """
     try:
-        trend = np.zeros(len(df), dtype=np.float32)
-        if len(df) == 1:
-            return pd.Series(trend, index=df.index, name="Trend")
-        for i in range(len(df) - 1):
-            if df[column].iloc[i] <= df[column].iloc[i + 1]:
-                trend[i] = 1.0
-        return pd.Series(trend, index=df.index, name="Trend")
+        trend = np.sign(df[column].diff())
+        trend[trend < 0] = 0.0
+        return pd.Series(trend, index=df.index, name="Trend").shift(-1).fillna(0)
     except Exception as e:
         raise CustomException(e, sys)
 

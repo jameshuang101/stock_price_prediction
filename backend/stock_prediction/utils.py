@@ -6,7 +6,7 @@ import pickle
 from sklearn.metrics import r2_score
 from sklearn.model_selection import GridSearchCV
 import torch
-from src.exception import CustomException
+from stock_prediction.exception import CustomException
 import jsonpickle
 import json
 

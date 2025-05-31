@@ -7,7 +7,7 @@ import dateparser
 import pickle
 import json
 import sys
-from src.exception import CustomException
+from stock_prediction.exception import CustomException
 import pandas_market_calendars as mcal
 
 
@@ -246,7 +246,7 @@ def get_market_days(
         raise CustomException(e, sys)
 
 
-def get_lead_days(date: Optional[str | datetime] = None, lead_days: int = 18):
+def get_lead_days(date: Optional[str | datetime] = None, lead_days: int = 20):
     """
     Get the N market days of lead data for feature engineering immediately preceding a date (Defaults to 18 lead days).
     """

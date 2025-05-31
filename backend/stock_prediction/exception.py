@@ -1,5 +1,5 @@
 import sys
-from src.logger import logging
+from stock_prediction.logger import logging
 
 
 def error_message_detail(error, error_detail: sys):

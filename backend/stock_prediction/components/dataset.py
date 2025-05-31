@@ -1,12 +1,12 @@
 import torch
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 import numpy as np
-from src.logger import logging
+from stock_prediction.logger import logging
 from typing import List, Optional, Tuple
-from src.exception import CustomException
-from src.utils import save_object, load_object
+from stock_prediction.exception import CustomException
+from stock_prediction.utils import save_object, load_object
 import dateparser
-from src.preprocessing import (
+from stock_prediction.preprocessing import (
     data_cleaning,
     data_ingestion,
     data_transformation,
@@ -19,7 +19,7 @@ import yaml
 import os
 import pickle
 from os.path import join, dirname, abspath
-from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.preprocessing import RobustScaler, StandardScaler, MinMaxScaler
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
@@ -39,11 +39,12 @@ class StockDataset(Dataset):
         self,
         stock: Optional[str] = None,
         dict_path: Optional[str] = None,
-        scaler: Optional[RobustScaler | StandardScaler] = None,
+        scaler: Optional[RobustScaler | StandardScaler | MinMaxScaler] = None,
         date: Optional[str | datetime] = None,
         start_date: Optional[str | datetime] = None,
         end_date: Optional[str | datetime] = None,
         targets: Optional[List[str]] = ["trend", "peaks", "valleys"],
+        inc_macro: bool=False,
     ):
         if dict_path is not None:
             logging.info("Loading data dict from file...")
@@ -131,7 +132,7 @@ class StockDataset(Dataset):
 
         logging.info("Calculating financial indicators and trend...")
         try:
-            self._data = indicators.get_technical_indicators(stock_data, inplace=False)
+            self._data = indicators.get_technical_indicators_v2(stock_data, inplace=False)
             self.trend = data_transformation.get_trend(self._data)
         except Exception as e:
             logging.info(f"Failed to calculate financial indicators and trend: {e}")
@@ -157,30 +158,31 @@ class StockDataset(Dataset):
             raise CustomException(e, sys)
         logging.info(f"Successfully formatted and cleaned data.")
 
-        logging.info(f"Grabbing macroeconomic data from {lead_date} to {end_date}...")
-        try:
-            macro_data = data_ingestion.get_macro_data(
-                fred_api_key=FRED_API_KEY,
-                start_date=lead_date,
-                end_date=end_date,
-            )
-            self._data = self._data.merge(
-                macro_data, how="left", left_index=True, right_index=True
-            )
-        except Exception as e:
-            logging.info(f"Failed to grab macroeconomic data: {e}")
-            raise CustomException(e, sys)
-        logging.info(f"Success! Grabbed and merged {len(macro_data)} rows of data.")
+        if inc_macro:
+            logging.info(f"Grabbing macroeconomic data from {lead_date} to {end_date}...")
+            try:
+                macro_data = data_ingestion.get_macro_data(
+                    fred_api_key=FRED_API_KEY,
+                    start_date=lead_date,
+                    end_date=end_date,
+                )
+                self._data = self._data.merge(
+                    macro_data, how="left", left_index=True, right_index=True
+                )
+            except Exception as e:
+                logging.info(f"Failed to grab macroeconomic data: {e}")
+                raise CustomException(e, sys)
+            logging.info(f"Success! Grabbed and merged {len(macro_data)} rows of data.")
 
         logging.info("Scaling data...")
         try:
-            X = self._data.drop(
-                columns=["Open", "Close", "High", "Low", "Volume"]
-            ).to_numpy(dtype=np.float32)
+            X = self._data.drop(columns=["Open", "Close", "High", "Low", "Volume"]).to_numpy(
+                dtype=np.float32
+            )
             if scaler is not None:
                 self._scaler = scaler
             else:
-                self._scaler = RobustScaler()
+                self._scaler = MinMaxScaler(feature_range=(0, 1))
                 self._scaler.fit(X)
             self.X = self._scaler.transform(X)
             self.y = np.stack(

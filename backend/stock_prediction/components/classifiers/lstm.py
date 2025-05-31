@@ -9,7 +9,7 @@ import math
 import os
 import pandas as pd
 import numpy as np
-from src.utils import save_model
+from stock_prediction.utils import save_model
 from sklearn.preprocessing import StandardScaler
 
 
