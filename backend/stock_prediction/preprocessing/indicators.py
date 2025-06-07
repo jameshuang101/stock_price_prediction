@@ -115,6 +115,17 @@ def stochastic_oscillator(
         raise CustomException(e, sys)
 
 
+def rvol(data: pd.DataFrame, period: int = 14, column: str = "Volume") -> pd.Series:
+    """
+    Calculates the Relative Volume Index (RVOL) for a given DataFrame.
+    """
+    try:
+        avg_vol = data[column].rolling(window=period).mean()
+        return data[column] / avg_vol
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
 def williams_r(
     data: pd.DataFrame,
     period: int,

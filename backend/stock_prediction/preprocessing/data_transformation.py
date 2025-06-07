@@ -71,14 +71,14 @@ def lookback_format(
         raise CustomException(e, sys)
 
 
-def get_trend(df: pd.DataFrame, column: str = "Close") -> pd.Series:
+def get_trend(df: pd.DataFrame, column: str = "Close", days_out: int = 1) -> pd.Series:
     """
     Computes the trend of the given column in the DataFrame.
     """
     try:
-        trend = np.sign(df[column].diff())
+        trend = np.sign(df[column].diff(periods=days_out))
         trend[trend < 0] = 0.0
-        return pd.Series(trend, index=df.index, name="Trend").shift(-1).fillna(0)
+        return pd.Series(trend, index=df.index, name="Trend").shift(-days_out).fillna(0)
     except Exception as e:
         raise CustomException(e, sys)
 
