@@ -43,8 +43,8 @@ class StockDataset(Dataset):
         date: Optional[str | datetime] = None,
         start_date: Optional[str | datetime] = None,
         end_date: Optional[str | datetime] = None,
-        targets: Optional[List[str]] = ["trend", "peaks", "valleys"],
-        inc_macro: bool=False,
+        targets: Optional[List[str]] = ["trend", "peaks", "valleys", "buy_reco"],
+        inc_macro: bool = False,
     ):
         if dict_path is not None:
             logging.info("Loading data dict from file...")
@@ -132,7 +132,7 @@ class StockDataset(Dataset):
 
         logging.info("Calculating financial indicators and trend...")
         try:
-            self._data = indicators.get_technical_indicators_v2(stock_data, inplace=False)
+            self._data = indicators.get_technical_indicators(stock_data, inplace=False)
             self.trend = data_transformation.get_trend(self._data)
         except Exception as e:
             logging.info(f"Failed to calculate financial indicators and trend: {e}")
@@ -144,22 +144,31 @@ class StockDataset(Dataset):
             self._data = data_cleaning.remove_inf_and_nan(self._data, behavior="impute")
             self._data = self._data.loc[start_date:]
             targets_dict = dict()
-            targets_dict["trend"] = data_transformation.get_trend(self._data).to_numpy(
-                dtype=np.float32
-            )
-            targets_dict["peaks"] = data_transformation.get_peaks(self._data).to_numpy(
-                dtype=np.float32
-            )
-            targets_dict["valleys"] = data_transformation.get_valleys(
-                self._data
-            ).to_numpy(dtype=np.float32)
+            if "trend" in targets:
+                targets_dict["trend"] = data_transformation.get_trend(
+                    self._data
+                ).to_numpy(dtype=np.float32)
+            if "peaks" in targets:
+                targets_dict["peaks"] = data_transformation.get_peaks(
+                    self._data
+                ).to_numpy(dtype=np.float32)
+            if "valleys" in targets:
+                targets_dict["valleys"] = data_transformation.get_valleys(
+                    self._data
+                ).to_numpy(dtype=np.float32)
+            if "buy_reco" in targets:
+                targets_dict["buy_reco"] = data_transformation.get_buy_reco(
+                    self._data
+                ).to_numpy(dtype=np.float32)
         except Exception as e:
             logging.info(f"Failed to format and clean data: {e}")
             raise CustomException(e, sys)
         logging.info(f"Successfully formatted and cleaned data.")
 
         if inc_macro:
-            logging.info(f"Grabbing macroeconomic data from {lead_date} to {end_date}...")
+            logging.info(
+                f"Grabbing macroeconomic data from {lead_date} to {end_date}..."
+            )
             try:
                 macro_data = data_ingestion.get_macro_data(
                     fred_api_key=FRED_API_KEY,
@@ -176,13 +185,13 @@ class StockDataset(Dataset):
 
         logging.info("Scaling data...")
         try:
-            X = self._data.drop(columns=["Open", "Close", "High", "Low", "Volume"]).to_numpy(
-                dtype=np.float32
-            )
+            X = self._data.drop(
+                columns=["Open", "Close", "High", "Low", "Volume"]
+            ).to_numpy(dtype=np.float32)
             if scaler is not None:
                 self._scaler = scaler
             else:
-                self._scaler = MinMaxScaler(feature_range=(0, 1))
+                self._scaler = RobustScaler()
                 self._scaler.fit(X)
             self.X = self._scaler.transform(X)
             self.y = np.stack(

@@ -107,3 +107,25 @@ def get_valleys(df: pd.DataFrame, column: str = "Close") -> pd.Series:
         return pd.Series(valleys, index=df.index, name="Valleys")
     except Exception as e:
         raise CustomException(e, sys)
+
+
+def get_buy_reco(
+    df: pd.DataFrame,
+    pct_thresholds: List[float] = [-0.005, 0.005],
+    column: str = "Close",
+) -> pd.Series:
+    try:
+        pct_change = df[column].pct_change().shift(-1).fillna(0)
+        pct_thresholds = (
+            [min(pct_change.min() - 0.001, -100)]
+            + pct_thresholds
+            + [max(pct_change.max() + 0.001, 100)]
+        )
+        return pd.cut(
+            pct_change,
+            pct_thresholds,
+            labels=False,
+            duplicates="drop",
+        )
+    except Exception as e:
+        raise CustomException(e, sys)

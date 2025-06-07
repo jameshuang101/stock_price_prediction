@@ -480,7 +480,7 @@ def psy(
         raise CustomException(e, sys)
 
 
-def get_technical_indicators_v1(
+def get_technical_indicators(
     df: pd.DataFrame,
     ohlcv_cols: Tuple[str, str, str, str, str] = (
         "Open",
@@ -528,29 +528,6 @@ def get_technical_indicators_v1(
             df_copy[f"r{i}"] = log_price(df_copy, col1, col2, shift1, shift2)
             i += 1
         df_copy = stochastic_oscillator(df_copy, period=14, ohlcv_cols=ohlcv_cols)
-        if inplace:
-            df = df_copy
-        return df_copy
-    except Exception as e:
-        raise CustomException(e, sys)
-
-
-def get_technical_indicators_v2(
-    df: pd.DataFrame,
-    ohlcv_cols: Tuple[str, str, str, str] = (
-        "Open",
-        "High",
-        "Low",
-        "Close",
-        "Volume",
-    ),
-    inplace: bool = True,
-) -> Optional[pd.DataFrame]:
-    """
-    Computes technical indicators for the given DataFrame.
-    """
-    try:
-        df_copy = df.copy()
         df_copy["OBV"] = obv(df_copy, ohlcv_cols=ohlcv_cols)
         df_copy["SMA"] = sma(df_copy, period=5, column=ohlcv_cols[3])
         df_copy["Bias"] = bias(df_copy, period=6, ohlcv_cols=ohlcv_cols)
@@ -565,7 +542,12 @@ def get_technical_indicators_v2(
         df_copy["ASY4"] = SY.rolling(window=4).mean()
         df_copy["ASY3"] = SY.rolling(window=3).mean()
         df_copy["ASY2"] = SY.rolling(window=2).mean()
-        df_copy["ASY1"] = log_price(df_copy, col1=ohlcv_cols[3], col2=ohlcv_cols[3], shift1=1, shift2=2) * 100
+        df_copy["ASY1"] = (
+            log_price(
+                df_copy, col1=ohlcv_cols[3], col2=ohlcv_cols[3], shift1=1, shift2=2
+            )
+            * 100
+        )
         if inplace:
             df = df_copy
         return df_copy
