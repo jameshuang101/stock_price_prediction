@@ -215,7 +215,7 @@ class StockDataset(Dataset):
             if scaler is not None:
                 self._scaler = scaler
             else:
-                self._scaler = RobustScaler()
+                self._scaler = StandardScaler()
                 self._scaler.fit(X)
             self.X = self._scaler.transform(X)
             self.y = np.stack(
