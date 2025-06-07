@@ -94,7 +94,7 @@ def get_stock_data(
 # Relevant tickers: EFFR, UNRATE, UMCSENT
 def get_macro_data(
     fred_api_key: str,
-    ticker: str = "EFFR UNRATE UMCSENT ^VIX DX-Y.NYB",
+    ticker: str = "EFFR UNRATE UMCSENT DX-Y.NYB ^VIX ^VVIX ^SKEW ^GVZ ^OVX ^VXN",
     start_date: Optional[str | datetime] = None,
     end_date: Optional[str | datetime] = None,
     as_json: bool = False,

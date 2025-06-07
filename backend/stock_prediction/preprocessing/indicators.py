@@ -115,7 +115,7 @@ def stochastic_oscillator(
         raise CustomException(e, sys)
 
 
-def rvol(data: pd.DataFrame, period: int = 14, column: str = "Volume") -> pd.Series:
+def rvol(data: pd.DataFrame, period: int = 20, column: str = "Volume") -> pd.Series:
     """
     Calculates the Relative Volume Index (RVOL) for a given DataFrame.
     """
@@ -559,6 +559,7 @@ def get_technical_indicators(
             )
             * 100
         )
+        df_copy["RVOL"] = rvol(df_copy, period=20, column=ohlcv_cols[-1])
         if inplace:
             df = df_copy
         return df_copy

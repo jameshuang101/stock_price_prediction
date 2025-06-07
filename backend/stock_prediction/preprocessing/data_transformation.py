@@ -83,6 +83,17 @@ def get_trend(df: pd.DataFrame, column: str = "Close", days_out: int = 1) -> pd.
         raise CustomException(e, sys)
 
 
+def get_return(df: pd.DataFrame, column: str = "Close", days_out: int = 1) -> pd.Series:
+    """
+    Computes the return of the given column in the DataFrame.
+    """
+    try:
+        out = df[column].diff(periods=days_out)
+        return pd.Series(out, index=df.index, name="Return").shift(-days_out).fillna(0)
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
 def get_peaks(df: pd.DataFrame, column: str = "Close") -> pd.Series:
     """
     Computes the peaks of the given column in the DataFrame.
