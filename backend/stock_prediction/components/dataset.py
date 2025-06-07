@@ -141,7 +141,6 @@ class StockDataset(Dataset):
 
         logging.info("Formatting and cleaning data...")
         try:
-            self._data = data_cleaning.remove_inf_and_nan(self._data, behavior="impute")
             self._data = self._data.loc[start_date:]
             targets_dict = dict()
             if "trend" in targets:
@@ -177,6 +176,9 @@ class StockDataset(Dataset):
                 )
                 self._data = self._data.merge(
                     macro_data, how="left", left_index=True, right_index=True
+                )
+                self._data = data_cleaning.remove_inf_and_nan(
+                    self._data, behavior="impute"
                 )
             except Exception as e:
                 logging.info(f"Failed to grab macroeconomic data: {e}")
