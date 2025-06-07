@@ -124,9 +124,10 @@ def get_buy_reco(
     df: pd.DataFrame,
     pct_thresholds: List[float] = [-0.005, 0.005],
     column: str = "Close",
+    days_out: int = 1,
 ) -> pd.Series:
     try:
-        pct_change = df[column].pct_change().shift(-1).fillna(0)
+        pct_change = df[column].pct_change(periods=days_out).shift(-days_out).fillna(0)
         pct_thresholds = (
             [min(pct_change.min() - 0.001, -100)]
             + pct_thresholds

@@ -43,7 +43,14 @@ class StockDataset(Dataset):
         date: Optional[str | datetime] = None,
         start_date: Optional[str | datetime] = None,
         end_date: Optional[str | datetime] = None,
-        targets: Optional[List[str]] = ["trend", "peaks", "valleys", "buy_reco"],
+        targets: Optional[List[str]] = [
+            "trend",
+            "peaks",
+            "valleys",
+            "buy_reco",
+            "return",
+        ],
+        days_out: int = 1,
         inc_macro: bool = False,
     ):
         if dict_path is not None:
@@ -59,15 +66,26 @@ class StockDataset(Dataset):
                     ).to_numpy(dtype=np.float32)
                 )
                 targets_dict = dict()
-                targets_dict["trend"] = data_transformation.get_trend(
-                    self._data
-                ).to_numpy(dtype=np.float32)
-                targets_dict["peaks"] = data_transformation.get_peaks(
-                    self._data
-                ).to_numpy(dtype=np.float32)
-                targets_dict["valleys"] = data_transformation.get_valleys(
-                    self._data
-                ).to_numpy(dtype=np.float32)
+                if "trend" in targets:
+                    targets_dict["trend"] = data_transformation.get_trend(
+                        self._data, days_out=days_out
+                    ).to_numpy(dtype=np.float32)
+                if "peaks" in targets:
+                    targets_dict["peaks"] = data_transformation.get_peaks(
+                        self._data
+                    ).to_numpy(dtype=np.float32)
+                if "valleys" in targets:
+                    targets_dict["valleys"] = data_transformation.get_valleys(
+                        self._data
+                    ).to_numpy(dtype=np.float32)
+                if "buy_reco" in targets:
+                    targets_dict["buy_reco"] = data_transformation.get_buy_reco(
+                        self._data, days_out=days_out
+                    ).to_numpy(dtype=np.float32)
+                if "return" in targets:
+                    targets_dict["return"] = data_transformation.get_return(
+                        self._data, days_out=days_out
+                    ).to_numpy(dtype=np.float32)
                 self.y = np.stack(
                     [targets_dict[target] for target in targets],
                     axis=1,
@@ -145,7 +163,7 @@ class StockDataset(Dataset):
             targets_dict = dict()
             if "trend" in targets:
                 targets_dict["trend"] = data_transformation.get_trend(
-                    self._data
+                    self._data, days_out=days_out
                 ).to_numpy(dtype=np.float32)
             if "peaks" in targets:
                 targets_dict["peaks"] = data_transformation.get_peaks(
@@ -157,7 +175,11 @@ class StockDataset(Dataset):
                 ).to_numpy(dtype=np.float32)
             if "buy_reco" in targets:
                 targets_dict["buy_reco"] = data_transformation.get_buy_reco(
-                    self._data
+                    self._data, days_out=days_out
+                ).to_numpy(dtype=np.float32)
+            if "return" in targets:
+                targets_dict["return"] = data_transformation.get_return(
+                    self._data, days_out=days_out
                 ).to_numpy(dtype=np.float32)
         except Exception as e:
             logging.info(f"Failed to format and clean data: {e}")
